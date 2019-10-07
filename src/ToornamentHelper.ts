@@ -2,6 +2,7 @@ import moment from 'moment';
 
 const accessTokenItemName = 'tss_t_at';
 const expireDateItemName = 'tss_t_ed';
+const apiKeyItemName = 'tss_t_ak';
 
 export interface ToornamentToken {
     accessToken: string;
@@ -9,23 +10,30 @@ export interface ToornamentToken {
 }
 
 export default class ToornamentHelper {
+    private apiKey: string | null;
     private token: ToornamentToken | null;
 
     constructor() {
+        this.apiKey = this.readApiKey();
         this.token = this.readToken();
     }
 
-    public getToken(apiKey: string, clientId: string, clientSecret: string) {
+    public getToken(clientId: string, clientSecret: string, callback: () => void) {
+        if (this.apiKey == null) {
+            return false;
+        }
+
         let request = new XMLHttpRequest();
         request.open('POST', 'https://api.toornament.com/oauth/v2/token');
-        request.setRequestHeader('X-Api-Key', apiKey);
+        request.setRequestHeader('X-Api-Key', this.apiKey);
         request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         request.addEventListener('load', (event) => {
             const result = JSON.parse(request.responseText);
             this.updateToken(result.access_token, result.expires_in);
+            callback();
         });
         const body = `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}&scope=organizer:result`
-        request.send(body)
+        request.send(body);
     }
 
     private readToken(): ToornamentToken | null {
@@ -43,6 +51,29 @@ export default class ToornamentHelper {
         return { accessToken: token, expireDate: expireDate };
     }
 
+    private readApiKey(): string | null {
+        return sessionStorage.getItem(apiKeyItemName);
+    }
+
+    public updateApiKey(apiKey: string) {
+        if (apiKey == '') {
+            this.apiKey = null;
+            sessionStorage.removeItem(apiKeyItemName);
+            return;
+        }
+
+        this.apiKey = apiKey;
+        sessionStorage.setItem(apiKeyItemName, apiKey);
+    }
+
+    public hasApiKey() {
+        return this.apiKey != null && this.apiKey != '';
+    }
+
+    public getApiKey(): string | null {
+        return this.apiKey;
+    } 
+
     private updateToken(newToken: string, expiresIn: number) {
         const expireMoment = moment().add(expiresIn, 'minutes');
         const expireDate = expireMoment.toDate();
@@ -51,8 +82,23 @@ export default class ToornamentHelper {
         this.token = { accessToken: newToken, expireDate: expireDate }
     }
 
-    public rangedToornamentGETAPICall(ressource: string, apiKey: string, paginationIdentifier: string, callback: (result: any[]) => void, viewerCall: boolean = false,
-        customHeaders: { name: string, value: string }[] = [], maxResults: number = -1, rangeWidth: number = 50): void {
+    public tokenIsValid(): boolean {
+        if (this.token == null) {
+            return false;
+        }
+
+        if (this.token.expireDate < new Date()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public rangedToornamentGETAPICall(ressource: string, paginationIdentifier: string, callback: (result: any[]) => void, viewerCall: boolean = false,
+        customHeaders: { name: string, value: string }[] = [], maxResults: number = -1, rangeWidth: number = 50): boolean {
+        if (this.apiKey == null) {
+            return false;
+        }
 
         if (!viewerCall && !this.tokenIsValid()) {
             throw new Error('Access Token invalid. Create new Token.');
@@ -76,33 +122,27 @@ export default class ToornamentHelper {
                     callback(finalResult);
                 } else {
                     rangeOffset += rangeStep;
-                    this.makePagedAPIGETCall(ressource, apiKey, paginationIdentifier, minRange + rangeOffset, maxRange + rangeOffset, apiCallback, viewerCall, customHeaders);
+                    this.makePagedAPIGETCall(ressource, paginationIdentifier, minRange + rangeOffset, maxRange + rangeOffset, apiCallback, viewerCall, customHeaders);
                 }
             } else {
                 console.error(result);
             }
         };
-        this.makePagedAPIGETCall(ressource, apiKey, paginationIdentifier, minRange, maxRange, apiCallback, viewerCall, customHeaders);
-    }
-
-    public tokenIsValid(): boolean {
-        if (this.token == null) {
-            return false;
-        }
-
-        if (this.token.expireDate < new Date()) {
-            return false;
-        }
+        this.makePagedAPIGETCall(ressource, paginationIdentifier, minRange, maxRange, apiCallback, viewerCall, customHeaders);
 
         return true;
     }
 
-    private makePagedAPIGETCall(ressource: string, apiKey: string, paginationIdentifier: string, rangeMin: number, rangeMax: number,
+    private makePagedAPIGETCall(ressource: string, paginationIdentifier: string, rangeMin: number, rangeMax: number,
         callback: (result: any, status: number, remainingItems: number) => void, viewerCall: boolean = true, customHeaders: { name: string, value: string }[] = []) {
+        if (this.apiKey == null) {
+            return false;
+        }
+
         let request = new XMLHttpRequest();
         const endpoint = `https://api.toornament.com/${viewerCall ? 'viewer' : 'organizer'}/v2${ressource}`;
         request.open('GET', endpoint);
-        request.setRequestHeader('X-Api-Key', apiKey);
+        request.setRequestHeader('X-Api-Key', this.apiKey);
 
         if (!viewerCall) {
             if (!this.tokenIsValid()) {
@@ -141,12 +181,16 @@ export default class ToornamentHelper {
         request.send();
     }
 
-    private makeAPIGETCall(ressource: string, apiKey: string, callback: (result: any, status: number) => void, viewerCall: boolean = true, 
+    private makeAPIGETCall(ressource: string, callback: (result: any, status: number) => void, viewerCall: boolean = true,
         customHeaders: { name: string, value: string }[] = []) {
+        if (this.apiKey == null) {
+            return false;
+        }
+
         let request = new XMLHttpRequest();
         const endpoint = `https://api.toornament.com/${viewerCall ? 'viewer' : 'organizer'}/v2${ressource}`;
         request.open('GET', endpoint);
-        request.setRequestHeader('X-Api-Key', apiKey);
+        request.setRequestHeader('X-Api-Key', this.apiKey);
 
         if (!viewerCall) {
             if (!this.tokenIsValid()) {
@@ -168,36 +212,40 @@ export default class ToornamentHelper {
         request.send();
     }
 
-    public getOrganizerMatches(apiKey: string, tournamentId: string, stageId: string) {
+    public getOrganizerMatches(tournamentId: string, stageId: string, callback: (results: any[]) => void) {
         let ressource = `/tournaments/${tournamentId}/matches?stage_ids=${stageId}`
-        this.rangedToornamentGETAPICall(ressource, apiKey, 'matches', (result) => {
-            console.log(result);
-            const matchId = result[0].id;
-            let ressource2 = `/tournaments/${tournamentId}/matches/${matchId}`
-            this.makeAPIGETCall(ressource2, apiKey, (result) => {
-                console.log(result);
-            });
-        });
+        this.rangedToornamentGETAPICall(ressource, 'matches', callback);
     }
 
-    public getOrganizerRounds(apiKey: string, tournamentId: string, stageId: string) {
+    public getOrganizerRounds(tournamentId: string, stageId: string, callback: (result: any) => void) {
         let ressource = `/tournaments/${tournamentId}/rounds?stage_ids=${stageId}`
-        this.rangedToornamentGETAPICall(ressource, apiKey, 'rounds', (result) => {
-            console.log(result);
-        }, false);
+        this.rangedToornamentGETAPICall(ressource, 'rounds', callback, false);
     }
 
-    public getOrganizerStages(apiKey: string, tournamentId: string) {
+    public getOrganizerStages(tournamentId: string, callback: (result: any) => void) {
         let ressource = `/tournaments/${tournamentId}/stages`
-        this.makeAPIGETCall(ressource, apiKey, (result) => {
+        this.makeAPIGETCall(ressource, callback, false);
+    }
+
+    public getOrganizerTournament(tournamentId: string) {
+        let ressource = `/tournaments/${tournamentId}`
+        this.makeAPIGETCall(ressource, (result) => {
             console.log(result);
         }, false);
     }
 
-    public getOrganizerTournament(apiKey: string, tournamentId: string) {
-        let ressource = `/tournaments/${tournamentId}`
-        this.makeAPIGETCall(ressource, apiKey, (result) => {
-            console.log(result);
-        }, false);
+    public getOrganizerMatchGames(tournamentId: string, matchId: string, callback: (result: any) => void) {
+        let ressource = `/tournaments/${tournamentId}/matches/${matchId}/games`
+        this.rangedToornamentGETAPICall(ressource, 'games', callback, false);
+    }
+
+    public getBracketNodes(tournamentId: string, stageId: string, callback: (result: any) => void) {
+        let ressource = `/tournaments/${tournamentId}/stages/${stageId}/bracket-nodes`
+        this.rangedToornamentGETAPICall(ressource, 'nodes', callback, true);
+    }
+
+    public getOrganizerGroups(tournamentId: string, stageId: string, callback: (result: any) => void) {
+        let ressource = `/tournaments/${tournamentId}/groups?stage_ids=${stageId}`
+        this.rangedToornamentGETAPICall(ressource, 'groups', callback, false);
     }
 }
