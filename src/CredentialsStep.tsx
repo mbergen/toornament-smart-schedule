@@ -4,12 +4,11 @@ import ToornamentHelper from './ToornamentHelper';
 
 const styles = (theme: Theme) => createStyles({
     textField: {
-        margin: theme.spacing(1),
+        marginTop: theme.spacing(1),
+        marginBottom: theme.spacing(1),
     },
     button: {
-        marginLeft: theme.spacing(2),
         marginTop: theme.spacing(1),
-        marginRight: theme.spacing(2),
         marginBottom: theme.spacing(1),
     }
 })
@@ -73,19 +72,16 @@ class CredentialsStep extends React.Component<CredentialsStepProps, CredentialsS
                     className={classes.textField}
                     value={this.state.apiKey}
                     onChange={this.handleChangeApiKey}
+                    error={this.props.toornamentHelper.getApiKey() == null}
+                    helperText={this.props.toornamentHelper.getApiKey() == null ? 'You must specify an api key' : ''}
                     margin='dense'
-                    variant='outlined'
                 />
-                <Typography
-                    hidden={this.props.toornamentHelper.getApiKey() != null}
-                >Enter your Api Key!</Typography>
                 <TextField
                     label='Client Id'
                     className={classes.textField}
                     value={this.state.clientId}
                     onChange={this.handleChangeClientId}
                     margin='dense'
-                    variant='outlined'
                 />
                 <TextField
                     label='Client Secret'
@@ -93,22 +89,20 @@ class CredentialsStep extends React.Component<CredentialsStepProps, CredentialsS
                     value={this.state.clientSecret}
                     onChange={this.handleChangeClientSecret}
                     margin='dense'
-                    variant='outlined'
                 />
-                <Button
-                    variant='contained'
-                    color='primary'
-                    className={classes.button}
-                    onClick={this.requestToken}
-                >
-                    Request Token
+                <div>
+                    <Button
+                        variant='contained'
+                        color={!this.props.toornamentHelper.tokenIsValid() ? 'primary' : 'default'}
+                        className={classes.button}
+                        onClick={this.requestToken}
+                    >
+                        Request Token
                 </Button>
+                </div>
                 <Typography
                     hidden={this.props.toornamentHelper.tokenIsValid()}
-                >Request a valid token!</Typography>
-                <Typography
-                    hidden={!this.props.toornamentHelper.tokenIsValid()}
-                >You have a valid token, you do not need to request one!</Typography>
+                >You must request a token to proceed.</Typography>
             </Grid>
         );
     }
