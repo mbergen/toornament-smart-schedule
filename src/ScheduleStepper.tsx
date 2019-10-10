@@ -6,7 +6,10 @@ import {
 import ToornamentHelper from './ToornamentHelper';
 import CredentialsStep from './CredentialsStep';
 import ConfigurationStep, { ScheduleConfig, SchedulingMode } from './ConfigurationStep';
-import { fetchStageData } from './Utils';
+import TournamentStructure from './TournamenStructure';
+import FetchDialog from './FetchDialog';
+import ReviewSchedule from './ReviewSchedule';
+import ApplyDialog from './ApplyDialog';
 
 const tournamentIdItemName = 'tss_i_ti';
 const stageIdItemName = 'tss_i_si';
@@ -22,6 +25,9 @@ const styles = (theme: Theme) => createStyles({
         marginTop: theme.spacing(1),
         marginBottom: theme.spacing(1),
     },
+    toorImg: {
+        maxWidth: 250,
+    }
 });
 
 interface ScheduleStage {
@@ -30,6 +36,11 @@ interface ScheduleStage {
     number: number;
     size: number;
     type: string;
+}
+
+export enum BracketType {
+    Bracket,
+    Rounds,
 }
 
 export interface ScheduleGroup {
@@ -69,10 +80,12 @@ interface ScheduleStepperState {
     stages: ScheduleStage[];
     stageId: string;
     scheduleConfig: ScheduleConfig;
-    groups: ScheduleGroup[];
-    matches: ScheduleMatch[];
-    rounds: ScheduleRound[];
+    structure: TournamentStructure;
     fetching: boolean;
+    fetchDialogOpen: boolean;
+    applyOpen: boolean;
+    applyProgress: number;
+    applyTotal: number;
 }
 
 interface ScheduleStepperProps {
@@ -88,7 +101,7 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
 
         const credentialsReady = props.toornamentHelper.hasApiKey() && props.toornamentHelper.tokenIsValid();
         this.state = {
-            activeStep: credentialsReady ? 3 : 0,
+            activeStep: credentialsReady ? 1 : 0,
             credentialsReady: credentialsReady,
             tournamentId: sessionStorage.getItem(tournamentIdItemName) || '',
             stages: [],
@@ -97,11 +110,14 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                 schedulingMode: SchedulingMode.Direct,
                 matchLengthSettings: [{ numberOfGames: 3, matchLengthMin: 30 }, { numberOfGames: 5, matchLengthMin: 45 }],
                 phases: [],
+                bracketType: BracketType.Bracket,
             },
-            matches: [],
-            groups: [],
-            rounds: [],
+            structure: new TournamentStructure([], [], [], BracketType.Bracket),
             fetching: false,
+            fetchDialogOpen: false,
+            applyOpen: false,
+            applyProgress: 0,
+            applyTotal: 0,
         }
     }
 
@@ -125,13 +141,14 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                 break;
             case 2:
                 const stage: ScheduleStage = this.state.stages.find(stage => stage.id == this.state.stageId)!;
-                let mode: SchedulingMode = SchedulingMode.Direct;
+                const newScheduleConfig = this.state.scheduleConfig;
                 switch (stage.type) {
                     case 'single_elimination':
                     case 'double_elimination':
                     case 'gauntlet':
                     case 'ffa_single_elimination':
-                        mode = SchedulingMode.Direct;
+                        newScheduleConfig.schedulingMode = SchedulingMode.Direct;
+                        newScheduleConfig.bracketType = BracketType.Bracket;
                         break;
                     case 'bracket_groups':
                     case 'pools':
@@ -140,46 +157,25 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                     case 'simple':
                     case 'ffa_bracket_groups':
                     default:
-                        mode = SchedulingMode.Weekly;
+                        newScheduleConfig.schedulingMode = SchedulingMode.Weekly;
+                        newScheduleConfig.bracketType = BracketType.Rounds;
                         break;
                 }
-                
-                const callback = (rounds: ScheduleRound[], matches: ScheduleMatch[], groups: ScheduleGroup[]) => {
-                    const newScheduleConfig = this.state.scheduleConfig;
-                    
-                    const gameLengths: number[] = [];
-                    matches.forEach(match => {
-                        if (gameLengths.findIndex(n => n == match.numberOfGames) < 0) {
-                            gameLengths.push(match.numberOfGames);
-                        }
 
-                        const roundIndex = rounds.findIndex(round => round.id == match.roundId);
-                        if (roundIndex >= 0 && rounds[roundIndex].roundLength < match.numberOfGames) {
-                            rounds[roundIndex].roundLength = match.numberOfGames;
-                        }
-                    });
-
-                    newScheduleConfig.schedulingMode = mode;
-                    newScheduleConfig.matchLengthSettings = gameLengths.map(length => {
-                        return { numberOfGames: length, matchLengthMin: 30 };
-                    });
-
-                    newScheduleConfig.phases = [{
-                        startingRoundId: rounds[0].id,
-                        groupId: rounds[0].groupId,
-                        startDate: new Date(),
-                    }]
-
-                    this.setState({
-                        activeStep: this.state.activeStep + 1,
-                        scheduleConfig: newScheduleConfig,
-                        rounds: rounds,
-                        groups: groups,
-                        matches: matches,
-                    });
-                }
-
-                fetchStageData(this.state.tournamentId, this.state.stageId, this.props.toornamentHelper, mode, callback);
+                this.setState({
+                    scheduleConfig: newScheduleConfig,
+                    fetching: true,
+                    fetchDialogOpen: true,
+                });
+                break;
+            case 3:
+                this.setState({ fetching: true });
+                this.state.structure.scheduleTournament(this.state.scheduleConfig);
+                this.setState({ fetching: false, activeStep: this.state.activeStep + 1 });
+                break;
+            case 4:
+                this.setState({ fetching: true });
+                this.applySchedule(() => this.setState({ fetching: false, activeStep: this.state.activeStep + 1, applyOpen: false }));
                 break;
             default:
                 this.setState({ activeStep: this.state.activeStep + 1 });
@@ -187,6 +183,80 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
         }
 
     };
+
+    applySchedule = (callback: () => void) => {
+        const matches = this.state.structure.getMatches();
+        const rounds = this.state.structure.getRounds();
+        this.setState({ applyOpen: true, applyTotal: matches.length, applyProgress: 0 });
+        let currentIndex = 0;
+        const scheduleNext = () => {
+            if (currentIndex >= matches.length) {
+                callback();
+                return;
+            }
+
+            const match = matches[currentIndex];
+            const round = rounds.find(round => round.id == match.roundId) || rounds[0];
+            const continueApplying = () => {
+                currentIndex++;
+                this.setState({ applyProgress: currentIndex })
+                scheduleNext();
+            }
+
+            if (round.scheduledAt == null) {
+                continueApplying();
+                return;
+            }
+
+            this.props.toornamentHelper.scheduleMatch(this.state.tournamentId, match.id, round.scheduledAt, (result: any, requestStatus: number) => {
+                if (requestStatus < 200 || requestStatus > 300) {
+                    console.log(result);
+                }
+
+                continueApplying();
+            });
+        }
+        scheduleNext();
+    }
+
+    fetchCallback = (rounds: ScheduleRound[], matches: ScheduleMatch[], groups: ScheduleGroup[]) => {
+        const newScheduleConfig = this.state.scheduleConfig;
+        const gameLengths: number[] = [];
+        matches.forEach(match => {
+            if (gameLengths.findIndex(n => n == match.numberOfGames) < 0) {
+                gameLengths.push(match.numberOfGames);
+            }
+
+            const roundIndex = rounds.findIndex(round => round.id == match.roundId);
+            if (roundIndex >= 0 && rounds[roundIndex].roundLength < match.numberOfGames) {
+                rounds[roundIndex].roundLength = match.numberOfGames;
+            }
+        });
+
+        newScheduleConfig.matchLengthSettings = gameLengths.map(length => {
+            return { numberOfGames: length, matchLengthMin: 30 };
+        });
+
+        const structure = new TournamentStructure(rounds, groups, matches, newScheduleConfig.bracketType);
+        const firstRounds = structure.getFirstRounds();
+
+        newScheduleConfig.phases = firstRounds.map(round => {
+            return {
+                startingRoundId: round.id,
+                groupId: round.groupId,
+                startDate: new Date(),
+                isFirst: true,
+            };
+        });
+
+        this.setState({
+            activeStep: this.state.activeStep + 1,
+            scheduleConfig: newScheduleConfig,
+            structure: structure,
+            fetching: false,
+            fetchDialogOpen: false,
+        });
+    }
 
     handleBack = () => {
         if (this.state.activeStep == 0) {
@@ -252,26 +322,42 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                 );
             case 2:
                 return (
-                    <List>
-                        {this.state.stages.map(stage => {
-                            return (
-                                <ListItem
-                                    button
-                                    selected={this.state.stageId == stage.id}
-                                    onClick={() => this.setState({ stageId: stage.id })}>
-                                    <ListItemText primary={`${stage.number}. ${stage.name}`} secondary={`${stage.size} Teams`} />
-                                </ListItem>
-                            );
-                        })}
-                    </List>
+                    <div>
+                        <List>
+                            {this.state.stages.map((stage, index) => {
+                                return (
+                                    <ListItem
+                                        button
+                                        selected={this.state.stageId == stage.id}
+                                        onClick={() => this.setState({ stageId: stage.id })}
+                                        key={`stage-${index}`}
+                                    >
+                                        <ListItemText primary={`${stage.number}. ${stage.name}`} secondary={`${stage.size} Teams`} />
+                                    </ListItem>
+                                );
+                            })}
+                        </List>
+                        <FetchDialog
+                            open={this.state.fetchDialogOpen}
+                            tournamentId={this.state.tournamentId}
+                            stageId={this.state.stageId}
+                            callback={this.fetchCallback}
+                            toornamentHelper={this.props.toornamentHelper}
+                        />
+                    </div>
                 );
             case 3:
-                return <ConfigurationStep 
-                            groups={this.state.groups}
-                            rounds={this.state.rounds}
-                            config={this.state.scheduleConfig} 
-                            scheduleConfigChanged={this.scheduleConfigChanged} 
-                        />;
+                return (
+                    <ConfigurationStep
+                        config={this.state.scheduleConfig}
+                        scheduleConfigChanged={this.scheduleConfigChanged}
+                        structure={this.state.structure}
+                    />
+                );
+            case 4:
+                return (
+                    <ReviewSchedule structure={this.state.structure} />
+                );
             default:
                 return <div></div>;
         }
@@ -305,7 +391,7 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                     {this.state.activeStep === this.steps.length ? (
                         <div>
                             <Typography className={classes.instructions}>
-                                All steps completed - you&apos;re finished
+                                Your stage has beeen scheduled. If you want to schedule another stage press the button below.
                             </Typography>
                             <Button onClick={this.handleReset} className={classes.button}>
                                 Back to start.
@@ -313,10 +399,10 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                         </div>
                     ) : (
                             <div>
-                                <Typography className={classes.instructions}>{this.getStepContent(this.state.activeStep)}</Typography>
+                                <div className={classes.instructions}>{this.getStepContent(this.state.activeStep)}</div>
                                 <Grid
                                     container
-                                    alignItems='center'
+                                    alignContent='center'
                                     direction='row'
                                 >
                                     <Button disabled={this.state.activeStep === 0} onClick={this.handleBack} className={classes.button}>
@@ -340,6 +426,8 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                             </div>
                         )}
                 </div>
+                <ApplyDialog open={this.state.applyOpen} progress={this.state.applyProgress} total={this.state.applyTotal} />
+                <img src={'./PoweredbyToor_Black.png'} className={classes.toorImg}></img>
             </div>
         );
     }

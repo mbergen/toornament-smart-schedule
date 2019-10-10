@@ -3,14 +3,17 @@ import {
     Typography, Button, withStyles, createStyles, Theme, TextField, Grid, Select, MenuItem,
     Table, TableHead, TableRow, TableCell, TableBody, FormControl, InputLabel, Tooltip
 } from '@material-ui/core';
-import { MuiPickersUtilsProvider, KeyboardDateTimePicker } from '@material-ui/pickers';
-import moment from 'moment';
+import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import MomentUtils from '@date-io/moment';
-import { ScheduleRound, ScheduleGroup } from './ScheduleStepper';
+import TournamentStructure from './TournamenStructure';
+import SchedulePhaseComponent from './SchedulePhaseComponent';
+import { BracketType } from './ScheduleStepper';
 
 const styles = (theme: Theme) => createStyles({
     textField: {
-        margin: theme.spacing(1),
+        marginTop: theme.spacing(1),
+        marginRight: theme.spacing(2),
+        marginBottom: theme.spacing(1),
         maxWidth: 300,
     },
     button: {
@@ -31,10 +34,14 @@ const styles = (theme: Theme) => createStyles({
     title: {
         marginTop: theme.spacing(3),
         marginBottom: theme.spacing(1),
+        borderBottomColor: theme.palette.secondary.main,
+        borderBottomStyle: 'solid',
+        borderBottomWidth: 4,
+        flexShrink: 1,
     }
 });
 
-interface MatchLengthSettings {
+export interface MatchLengthSettings {
     numberOfGames: number;
     matchLengthMin: number;
 }
@@ -46,21 +53,22 @@ export enum SchedulingMode {
     Direct = 'Direct',
 }
 
-interface SchedulePhase {
+export interface SchedulePhase {
     groupId: string;
     startingRoundId: string;
     startDate: Date;
+    isFirst: boolean;
 }
 
 export interface ScheduleConfig {
     schedulingMode: SchedulingMode;
+    bracketType: BracketType;
     matchLengthSettings: MatchLengthSettings[];
     phases: SchedulePhase[];
 }
 
 interface ConfigurationStepProps {
-    rounds: ScheduleRound[];
-    groups: ScheduleGroup[];
+    structure: TournamentStructure;
     config: ScheduleConfig;
     scheduleConfigChanged: (config: ScheduleConfig) => void;
     classes?: any;
@@ -112,32 +120,45 @@ class ConfigurationStep extends React.Component<ConfigurationStepProps, {}> {
         this.props.scheduleConfigChanged(newCfg);
     }
 
-    handleChangeStartDate = (index: number) => (moment: any) => {
-        const newCfg = this.props.config;
-        newCfg.phases[index].startDate = moment.toDate();
-        this.props.scheduleConfigChanged(newCfg);
-    }
-
     handleChangeMatchMode = (event: any) => {
         const newCfg = this.props.config;
         newCfg.schedulingMode = event.target.value;
         this.props.scheduleConfigChanged(newCfg);
     }
 
-    handleChangePhaseRound = (index: number) => (event: any) => {
-        const newCfg = this.props.config;
-        newCfg.phases[index].startingRoundId = event.target.value;
-        this.props.scheduleConfigChanged(newCfg);
-    }
-
-    handleChangePhaseGroup = (index: number) => (event: any) => {
-        const newCfg = this.props.config;
-        newCfg.phases[index].startingRoundId = event.target.value;
-        this.props.scheduleConfigChanged(newCfg);
-    }
-
     isValidMatchLength = (length: number): boolean => {
         return length > 0 && Number.isInteger(length);
+    }
+
+    onPhaseChanged = (index: number) => (phase: SchedulePhase | null) => {
+        const newCfg = this.props.config;
+        if (phase != null) {
+            newCfg.phases[index] = phase;
+        } else {
+            newCfg.phases.splice(index, 1);
+        }
+        this.props.scheduleConfigChanged(newCfg);
+    }
+
+    canAddNewPhase(): boolean {
+        return this.props.config.phases.length < this.props.structure.getRounds().length;
+    }
+
+    addPhase = () => {
+        const newCfg = this.props.config;
+        const newRound = this.props.structure.getRounds().find(round => this.props.config.phases.findIndex(phase => phase.startingRoundId == round.id) < 0);
+        if (newRound == undefined) {
+            return; //add user feedback
+        }
+
+        newCfg.phases.push({
+            groupId: newRound.groupId,
+            startingRoundId: newRound.id,
+            startDate: newCfg.phases[newCfg.phases.length - 1].startDate,
+            isFirst: false,
+        });
+
+        this.props.scheduleConfigChanged(newCfg);
     }
 
     render() {
@@ -146,51 +167,12 @@ class ConfigurationStep extends React.Component<ConfigurationStepProps, {}> {
 
         const phases = this.props.config.phases.map((phase, index) => {
             return (
-                <Grid
-                    item
-                    container
-                    direction='row'
+                <SchedulePhaseComponent
+                    phase={phase}
+                    structure={this.props.structure}
+                    phaseChanged={this.onPhaseChanged(index)}
                     key={`phase-${index}`}
-                >
-                    <Tooltip title='Select start date'>
-                        <KeyboardDateTimePicker
-                            disablePast
-                            className={classes.textField}
-                            ampm={false}
-                            value={phase.startDate}
-                            label='Phase Start'
-                            onChange={this.handleChangeStartDate(index)}
-                        />
-                    </Tooltip>
-                    <FormControl className={classes.textField}>
-                        <InputLabel>Group</InputLabel>
-                        <Select
-                            value={phase.groupId}
-                            onChange={this.handleChangeMatchMode}
-                            inputProps={{
-                                name: 'startRound',
-                            }}
-                        >
-                            {this.props.groups.map(group => {
-                                return (<MenuItem value={group.id}>{group.name}</MenuItem>)
-                            })}
-                        </Select>
-                    </FormControl>
-                    <FormControl className={classes.textField}>
-                        <InputLabel>Start Round</InputLabel>
-                        <Select
-                            value={phase.startingRoundId}
-                            onChange={this.handleChangeMatchMode}
-                            inputProps={{
-                                name: 'startRound',
-                            }}
-                        >
-                            {this.props.rounds.filter(round => round.groupId == phase.groupId).map(round => {
-                                return (<MenuItem value={round.id}>{round.name}</MenuItem>)
-                            })}
-                        </Select>
-                    </FormControl>
-                </Grid>
+                />
             );
         });
 
@@ -213,14 +195,35 @@ class ConfigurationStep extends React.Component<ConfigurationStepProps, {}> {
                             name: 'schedulingMode',
                         }}
                     >
-                        {modes.map(mode => {
-                            return (<MenuItem value={mode}>{mode}</MenuItem>)
+                        {modes.map((mode, index) => {
+                            return (<MenuItem value={mode} key={`mode-${index}-mi`}>{mode}</MenuItem>)
                         })}
                     </Select>
                 </FormControl>
-                <Typography className={classes.title} variant='h6'>Manage Phases</Typography>
+                <Typography className={classes.title} variant='h6' component='div'>Manage Phases</Typography>
+                <Typography>
+                    You can use Phases to start a part of your tournament at a different time. For example
+                    if you wanted to skip a day in your weekly round robin because its christmas eve or something, you would
+                    add a new phase starting at the first match day after the skipped day.
+                </Typography>
+                <Typography>
+                    This also enables you to use the {SchedulingMode.Direct} mode to schedule a bracket over the course of two days
+                    by adding a phase for the second day.
+                </Typography>
+                <Typography>
+                    Please note that the integrety of your structure will not be verified. You are resposible for starting phases at the right time and date.
+                    If you do not need to use phases just use the first one as the starting date for your tournament.
+                </Typography>
                 <MuiPickersUtilsProvider utils={MomentUtils}>
                     {phases}
+                    <Button
+                        variant='contained'
+                        color='primary'
+                        onClick={this.addPhase}
+                        disabled={!this.canAddNewPhase()}
+                    >
+                        Add Phase
+                    </Button>
                 </MuiPickersUtilsProvider>
                 <Typography className={classes.title} variant='h6'>Match Length</Typography>
                 {this.renderMatchLengthConfig()}

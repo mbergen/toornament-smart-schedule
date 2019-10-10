@@ -72,7 +72,7 @@ export default class ToornamentHelper {
 
     public getApiKey(): string | null {
         return this.apiKey;
-    } 
+    }
 
     private updateToken(newToken: string, expiresIn: number) {
         const expireMoment = moment().add(expiresIn, 'minutes');
@@ -153,7 +153,6 @@ export default class ToornamentHelper {
         }
 
         request.setRequestHeader('Range', `${paginationIdentifier}=${rangeMin}-${rangeMax}`);
-        console.log(`${paginationIdentifier}=${rangeMin}-${rangeMax}`);
         customHeaders.forEach(header => request.setRequestHeader(header.name, header.value));
         request.addEventListener('load', (event) => {
             if (request.status >= 200 && request.status < 300) {
@@ -170,7 +169,6 @@ export default class ToornamentHelper {
                     }
                 } else {
                     remainingItems = result.length >= 50 ? 50 : 0;
-                    console.log(result.length, result);
                 }
 
                 callback(result, request.status, remainingItems);
@@ -247,5 +245,33 @@ export default class ToornamentHelper {
     public getOrganizerGroups(tournamentId: string, stageId: string, callback: (result: any) => void) {
         let ressource = `/tournaments/${tournamentId}/groups?stage_ids=${stageId}`
         this.rangedToornamentGETAPICall(ressource, 'groups', callback, false);
+    }
+
+    public scheduleMatch(tournamentId: string, matchId: string, date: Date, callback: (result: any, requestStatus: number) => void) {
+        if (this.apiKey == null) {
+            return false;
+        }
+
+        const ressource = `https://api.toornament.com/organizer/v2/tournaments/${tournamentId}/matches/${matchId}`;
+        const requestBody = { scheduled_datetime: moment(date).format('YYYY-MM-DDTHH:mm:ssZ') } // 2015-12-31T00:00:00+00:00
+        let request = new XMLHttpRequest();
+        request.open('PATCH', ressource);
+        request.setRequestHeader('X-Api-Key', this.apiKey);
+
+        if (!this.tokenIsValid()) {
+            throw new Error('Access Token invalid. Create new Token.');
+        }
+
+        request.setRequestHeader('Authorization', `Bearer ${this.token!.accessToken}`);
+        request.addEventListener('load', () => {
+            if (request.status >= 200 && request.status < 300) {
+                const result = JSON.parse(request.responseText);
+                callback(result, request.status);
+            } else {
+                callback(request.statusText, request.status);
+            }
+        });
+
+        request.send(JSON.stringify(requestBody));
     }
 }
