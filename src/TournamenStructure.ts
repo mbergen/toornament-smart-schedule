@@ -1,7 +1,6 @@
-import { ScheduleRound, ScheduleGroup, ScheduleMatch, BracketType } from "./ScheduleStepper";
-import { MatchLengthSettings, SchedulePhase, SchedulingMode, ScheduleConfig } from "./ConfigurationStep";
+import { ScheduleRound, ScheduleGroup, ScheduleMatch, BracketType } from './ScheduleStepper';
+import { SchedulingMode, ScheduleConfig } from './ConfigurationStep';
 import moment from 'moment';
-
 
 interface RoundDependency {
     roundId: string;
@@ -28,7 +27,7 @@ export default class TournamentStructure {
 
     private createDependencies() {
         this.matches.forEach((match, index) => {
-            let dependencyIndex = this.roundDependencies.findIndex(dep => dep.roundId == match.roundId);
+            let dependencyIndex = this.roundDependencies.findIndex((dep) => dep.roundId === match.roundId);
             if (dependencyIndex < 0) {
                 dependencyIndex = this.roundDependencies.length;
                 this.roundDependencies.push({
@@ -40,31 +39,40 @@ export default class TournamentStructure {
 
             const dependency = this.roundDependencies[dependencyIndex];
             const precedingRoundIds: string[] = [];
-            const sourceNodeIds = match.opponents.map(opp => opp.sourceNodeId).filter(s => s != null);
+            const sourceNodeIds = match.opponents.map((opp) => opp.sourceNodeId).filter((s) => s != null);
 
-            sourceNodeIds.forEach(nodeId => {
-                const source = this.matches.find(match => match.id == nodeId);
-                if (source != undefined && dependency.precedingRoundIds.findIndex(id => id == source.roundId) < 0
-                    && precedingRoundIds.findIndex(id => id == source.roundId) < 0) {
+            sourceNodeIds.forEach((nodeId) => {
+                const source = this.matches.find((match) => match.id === nodeId);
+                if (
+                    source !== undefined &&
+                    dependency.precedingRoundIds.findIndex((id) => id === source.roundId) < 0 &&
+                    precedingRoundIds.findIndex((id) => id === source.roundId) < 0
+                ) {
                     precedingRoundIds.push(source.roundId);
                 }
             });
 
-            let followingRoundIds = this.roundDependencies.filter(dep => dep.precedingRoundIds.findIndex(id => id == match.roundId) >= 0)
-                .map(dep => dep.roundId);
-            followingRoundIds = followingRoundIds.filter(id => dependency.followingRoundIds.findIndex(dId => id == dId) < 0);
+            let followingRoundIds = this.roundDependencies
+                .filter((dep) => dep.precedingRoundIds.findIndex((id) => id === match.roundId) >= 0)
+                .map((dep) => dep.roundId);
+            followingRoundIds = followingRoundIds.filter(
+                (id) => dependency.followingRoundIds.findIndex((dId) => id === dId) < 0
+            );
 
             this.roundDependencies[dependencyIndex].precedingRoundIds.push(...precedingRoundIds);
             this.roundDependencies[dependencyIndex].followingRoundIds.push(...followingRoundIds);
 
-            precedingRoundIds.forEach(id => {
-                const depIndex = this.roundDependencies.findIndex(d => d.roundId == id);
-                if (depIndex >= 0 && this.roundDependencies[depIndex].followingRoundIds.findIndex(fId => fId == match.roundId) < 0) {
+            precedingRoundIds.forEach((id) => {
+                const depIndex = this.roundDependencies.findIndex((d) => d.roundId === id);
+                if (
+                    depIndex >= 0 &&
+                    this.roundDependencies[depIndex].followingRoundIds.findIndex((fId) => fId === match.roundId) < 0
+                ) {
                     this.roundDependencies[depIndex].followingRoundIds.push(match.roundId);
                 }
             });
 
-            this.roundDependencies[dependencyIndex] = dependency
+            this.roundDependencies[dependencyIndex] = dependency;
         });
     }
 
@@ -84,34 +92,36 @@ export default class TournamentStructure {
         const rounds: ScheduleRound[] = [];
         switch (this.bracketType) {
             case BracketType.Bracket:
-                let roundDeps = this.roundDependencies.filter(roundDep => roundDep.precedingRoundIds.length == 0);
-                roundDeps.forEach(roundDep => {
-                    const round = this.rounds.find(round => round.id == roundDep.roundId);
-                    if (round != undefined) {
+                let roundDeps = this.roundDependencies.filter((roundDep) => roundDep.precedingRoundIds.length === 0);
+                roundDeps.forEach((roundDep) => {
+                    const round = this.rounds.find((round) => round.id === roundDep.roundId);
+                    if (round !== undefined) {
                         rounds.push(round);
                     }
                 });
                 break;
             default:
             case BracketType.Rounds:
-                this.groups.forEach(group => {
-                    const firstRound = this.rounds.find(round => round.groupId == group.id);
-                    if (firstRound != undefined) {
+                this.groups.forEach((group) => {
+                    const firstRound = this.rounds.find((round) => round.groupId === group.id);
+                    if (firstRound !== undefined) {
                         rounds.push(firstRound);
                     }
-                })
+                });
                 break;
         }
         return rounds;
     }
 
     public getFollowingRounds(roundId: string): ScheduleRound[] {
-        const roundDep = this.roundDependencies.find(rDep => rDep.roundId == roundId);
-        if (roundDep == undefined) {
+        const roundDep = this.roundDependencies.find((rDep) => rDep.roundId === roundId);
+        if (roundDep === undefined) {
             return [];
         }
 
-        const result = this.rounds.filter(round => roundDep.followingRoundIds.findIndex(rId => rId == round.id) >= 0);
+        const result = this.rounds.filter(
+            (round) => roundDep.followingRoundIds.findIndex((rId) => rId === round.id) >= 0
+        );
         return result;
     }
 
@@ -119,24 +129,26 @@ export default class TournamentStructure {
         let result: ScheduleRound[] = [];
         switch (this.bracketType) {
             case BracketType.Bracket:
-                const roundDep = this.roundDependencies.find(rDep => rDep.roundId == roundId);
-                if (roundDep == undefined) {
+                const roundDep = this.roundDependencies.find((rDep) => rDep.roundId === roundId);
+                if (roundDep === undefined) {
                     break;
                 }
 
-                result = this.rounds.filter(round => roundDep.precedingRoundIds.findIndex(rId => rId == round.id) >= 0);
+                result = this.rounds.filter(
+                    (round) => roundDep.precedingRoundIds.findIndex((rId) => rId === round.id) >= 0
+                );
                 break;
             case BracketType.Rounds:
             default:
-                const roundsByGroup = this.groups.map(group => {
-                    return this.rounds.filter(round => round.groupId == group.id);
+                const roundsByGroup = this.groups.map((group) => {
+                    return this.rounds.filter((round) => round.groupId === group.id);
                 });
-                roundsByGroup.forEach(rounds => {
-                    const roundIndex = rounds.findIndex(round => round.id == roundId);
+                roundsByGroup.forEach((rounds) => {
+                    const roundIndex = rounds.findIndex((round) => round.id === roundId);
                     if (roundIndex > 0) {
                         result.push(rounds[roundIndex - 1]);
                     }
-                })
+                });
                 break;
         }
 
@@ -144,59 +156,121 @@ export default class TournamentStructure {
     }
 
     public getLastRounds() {
-        return this.rounds.filter(round => this.roundDependencies.findIndex(rDep => rDep.roundId == round.id && rDep.followingRoundIds.length == 0) >= 0);
+        return this.rounds.filter(
+            (round) =>
+                this.roundDependencies.findIndex(
+                    (rDep) => rDep.roundId === round.id && rDep.followingRoundIds.length === 0
+                ) >= 0
+        );
     }
 
     public scheduleTournament(config: ScheduleConfig) {
         const lastRounds = this.getLastRounds();
-        lastRounds.forEach(round => this.scheduleRound(round.id, config))
+        lastRounds.forEach((round) => this.scheduleRound(round.id, config));
+        this.matches.forEach((match) => this.scheduleMatch(match.id, config));
     }
 
     private scheduleRound(roundId: string, config: ScheduleConfig): Date {
         const { matchLengthSettings, phases, schedulingMode } = config;
-        const roundIndex = this.rounds.findIndex(r => r.id == roundId);
+        const roundIndex = this.rounds.findIndex((r) => r.id === roundId);
         if (roundIndex < 0) {
             throw new Error('Round must be in TournamentStructure.');
         }
 
         const round = this.rounds[roundIndex];
         // check if round is first round of a phase
-        const phase = phases.find(p => p.startingRoundId == round.id);
+        const phase = phases.find((p) => p.startingRoundId === round.id);
         const previousRounds: ScheduleRound[] = this.getPrecedingRounds(round.id);
-        if (phase != undefined) {
+        if (phase !== undefined) {
             // return phase start date as start date
             this.rounds[roundIndex].scheduledAt = phase.startDate;
-            previousRounds.forEach(r => this.scheduleRound(r.id, config));
+            previousRounds.forEach((r) => this.scheduleRound(r.id, config));
         } else {
             // schedule round based on max of previous rounds
-            if (previousRounds.length == 0) {
+            if (previousRounds.length === 0) {
                 // or start phase if they are first rounds
                 this.rounds[roundIndex].scheduledAt = phases[0].startDate;
-
             } else {
-                const previousDates = previousRounds.map(r => {
-                    return { date: this.scheduleRound(r.id, config), round: r }
+                const previousDates = previousRounds.map((r) => {
+                    return { date: this.scheduleRound(r.id, config), round: r };
                 });
                 previousDates.sort((a, b) => {
                     return b.date.getTime() - a.date.getTime();
                 }); // dates sorted desc
                 const prevStart = moment(previousDates[0].date);
                 switch (schedulingMode) {
-                    case SchedulingMode.Daily: this.rounds[roundIndex].scheduledAt = prevStart.add(1, 'days').toDate();
+                    case SchedulingMode.Daily:
+                        this.rounds[roundIndex].scheduledAt = prevStart.add(1, 'days').toDate();
                         break;
-                    case SchedulingMode.Weekly: this.rounds[roundIndex].scheduledAt = prevStart.add(1, 'weeks').toDate();
+                    case SchedulingMode.Weekly:
+                        this.rounds[roundIndex].scheduledAt = prevStart.add(1, 'weeks').toDate();
                         break;
-                    case SchedulingMode.Monthly: this.rounds[roundIndex].scheduledAt = prevStart.add(1, 'months').toDate();
+                    case SchedulingMode.Monthly:
+                        this.rounds[roundIndex].scheduledAt = prevStart.add(1, 'months').toDate();
                         break;
                     case SchedulingMode.Direct:
                     default:
-                        const lengthSetting = matchLengthSettings.find(l => l.numberOfGames == previousDates[0].round.roundLength) || { matchLengthMin: 30, numberOfGames: 1 };
-                        this.rounds[roundIndex].scheduledAt = prevStart.add(lengthSetting.matchLengthMin, 'minutes').toDate();
+                        const lengthSetting = matchLengthSettings.find(
+                            (l) => l.numberOfGames === previousDates[0].round.roundLength
+                        ) || { matchLengthMin: 30, numberOfGames: 1 };
+                        this.rounds[roundIndex].scheduledAt = prevStart
+                            .add(lengthSetting.matchLengthMin, 'minutes')
+                            .toDate();
                         break;
                 }
             }
         }
 
         return this.rounds[roundIndex].scheduledAt!;
+    }
+
+    private scheduleMatch(matchId: string, config: ScheduleConfig): Date {
+        const { matchLengthSettings } = config;
+
+        const matchIndex = this.matches.findIndex((m) => m.id === matchId);
+        if (matchIndex < 0) {
+            throw new Error('Round must be in TournamentStructure.');
+        }
+        const match = this.matches[matchIndex];
+
+        const roundIndex = this.rounds.findIndex((r) => r.id === match.roundId);
+        if (roundIndex < 0) {
+            throw new Error('Round must be in TournamentStructure.');
+        }
+
+        const round = this.rounds[roundIndex];
+        this.matches[matchIndex].scheduledAt = round.scheduledAt;
+
+        // applying this in direct mode could have unforseen consequences
+        if (config.schedulingMode !== SchedulingMode.Direct) {
+            
+            // conflicting matches are matches that have common participants and therefore must be played sequentially
+            const conflictingMatches = this.matches.filter(
+                // the other match is in same round but not the match that we want to schedule
+                (otherMatch) =>
+                    otherMatch.roundId === match.roundId &&
+                    otherMatch.id !== match.id &&
+                    // the other match is scheduled already and has a common participant with our match
+                    otherMatch.scheduledAt !== null &&
+                    otherMatch.participants.some((otherParticipant) =>
+                        match.participants.some((participant) => otherParticipant.id === participant.id)
+                    )
+            );
+    
+            if (conflictingMatches.length > 0) {
+                conflictingMatches.sort((a, b) => {
+                    return b.scheduledAt!.getTime() - a.scheduledAt!.getTime();
+                });
+                const latestConflictingMatch = conflictingMatches[conflictingMatches.length - 1];
+                const prevMatchStart = moment(latestConflictingMatch.scheduledAt!);
+                const lengthSetting = matchLengthSettings.find((l) => l.numberOfGames === round.roundLength) || {
+                    matchLengthMin: 30,
+                    numberOfGames: 1,
+                };
+                this.matches[matchIndex].scheduledAt = prevMatchStart.add(lengthSetting.matchLengthMin, 'minutes').toDate();
+            }
+        }
+
+        return this.matches[matchIndex].scheduledAt!;
     }
 }

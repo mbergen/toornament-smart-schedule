@@ -1,19 +1,30 @@
 import React from 'react';
-import { Dialog, DialogTitle, Grid, CircularProgress, Typography, Theme, createStyles, withStyles, DialogContent } from '@material-ui/core';
-import ToornamentHelper from "./ToornamentHelper";
-import { ScheduleRound, ScheduleMatch, ScheduleGroup } from "./ScheduleStepper";
+import {
+    Dialog,
+    DialogTitle,
+    Grid,
+    CircularProgress,
+    Typography,
+    Theme,
+    createStyles,
+    withStyles,
+    DialogContent,
+} from '@material-ui/core';
+import ToornamentHelper from './ToornamentHelper';
+import { ScheduleRound, ScheduleMatch, ScheduleGroup, ScheduleParticipant } from './ScheduleStepper';
 import CheckIcon from '@material-ui/icons/Check';
 import { green } from '@material-ui/core/colors';
 
-const styles = (theme: Theme) => createStyles({
-    checkIcon: {
-        color: green[300],
-    },
-    iconContainer: {
-        width: 20,
-        marginRight: theme.spacing(1),
-    },
-});
+const styles = (theme: Theme) =>
+    createStyles({
+        checkIcon: {
+            color: green[300],
+        },
+        iconContainer: {
+            width: 20,
+            marginRight: theme.spacing(1),
+        },
+    });
 
 interface FetchDialogProps {
     open: boolean;
@@ -32,7 +43,7 @@ interface FetchDialogState {
     matches: ScheduleMatch[];
     groups: ScheduleGroup[];
     matchIndex: number;
-    bracketNodeIndex: number,
+    bracketNodeIndex: number;
 }
 
 function getDefaultFetchDialogState(): FetchDialogState {
@@ -45,7 +56,7 @@ function getDefaultFetchDialogState(): FetchDialogState {
         groups: [],
         matchIndex: 0,
         bracketNodeIndex: 0,
-    }
+    };
 }
 
 class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
@@ -61,7 +72,7 @@ class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
         const { tournamentId, stageId, toornamentHelper, callback } = this.props;
 
         toornamentHelper.getOrganizerGroups(tournamentId, stageId, (results: any[]) => {
-            const groups = results.map(result => {
+            const groups = results.map((result) => {
                 return {
                     id: result.id,
                     name: result.name,
@@ -77,7 +88,7 @@ class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
         });
 
         toornamentHelper.getOrganizerRounds(tournamentId, stageId, (results: any[]) => {
-            const rounds = results.map(result => {
+            const rounds = results.map((result) => {
                 return {
                     id: result.id,
                     groupId: result.group_id,
@@ -97,14 +108,26 @@ class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
         });
 
         toornamentHelper.getOrganizerMatches(tournamentId, stageId, (matchResults: any[]) => {
-            const matches = matchResults.map(result => {
+            const matches = matchResults.map((result) => {
+                const participants: ScheduleParticipant[] = [];
+                result.opponents.forEach((opponent: any) => {
+                    if (opponent.participant) {
+                        participants.push({
+                            id: opponent.participant.id,
+                            name: opponent.participant.name,
+                        });
+                    }
+                });
+
                 return {
                     id: result.id,
                     groupId: result.group_id,
                     roundId: result.round_id,
                     numberOfGames: 0,
-                    opponents: []
-                }
+                    scheduledAt: null,
+                    opponents: [],
+                    participants: participants,
+                };
             });
 
             this.setState({ matches: matches });
@@ -112,11 +135,10 @@ class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
             const finishMatches = () => {
                 if (this.state.roundsFinished && this.state.groupsFinished) {
                     callback(this.state.rounds, this.state.matches, this.state.groups);
-                }
-                else {
+                } else {
                     this.setState({ matchesFinished: true });
                 }
-            }
+            };
 
             const getNodes = () => {
                 toornamentHelper.getBracketNodes(tournamentId, stageId, (results: any[]) => {
@@ -125,8 +147,8 @@ class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
                         const matches = this.state.matches;
                         let match = matches[matchIndex];
 
-                        if (match == null || match.id != result.id) {
-                            matchIndex = matches.findIndex(m => m.id == result.id);
+                        if (match == null || match.id !== result.id) {
+                            matchIndex = matches.findIndex((m) => m.id === result.id);
                             if (matchIndex < 0) {
                                 return;
                             }
@@ -145,7 +167,7 @@ class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
                     });
                     finishMatches();
                 });
-            }
+            };
 
             const callNext = () => {
                 if (this.state.matchIndex >= this.state.matches.length) {
@@ -159,8 +181,8 @@ class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
                     matches[this.state.matchIndex].numberOfGames = results.length;
                     this.setState({ matches: matches, matchIndex: this.state.matchIndex + 1 });
                     callNext();
-                }
-                toornamentHelper.getOrganizerMatchGames(tournamentId, matchId, callback)
+                };
+                toornamentHelper.getOrganizerMatchGames(tournamentId, matchId, callback);
             };
 
             callNext();
@@ -182,83 +204,65 @@ class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
     }
 
     render() {
-        const { classes } = this.props
+        const { classes } = this.props;
         const progressSize = 20;
         return (
             <Dialog open={this.props.open}>
                 <DialogTitle>Fetching Tournament Properties...</DialogTitle>
                 <DialogContent>
-                    <Grid
-                        container
-                        direction='row'
-                    >
-                        <Grid
-                            item
-                            container
-                            alignContent='center'
-                            className={classes.iconContainer}
-                        >
-                            {this.state.groupsFinished ? <CheckIcon className={classes.checkIcon} /> : <CircularProgress size={progressSize} />}
+                    <Grid container direction='row'>
+                        <Grid item container alignContent='center' className={classes.iconContainer}>
+                            {this.state.groupsFinished ? (
+                                <CheckIcon className={classes.checkIcon} />
+                            ) : (
+                                <CircularProgress size={progressSize} />
+                            )}
                         </Grid>
                         <Typography>Fetching Groups</Typography>
                     </Grid>
-                    <Grid
-                        container
-                        direction='row'
-                    >
-                        <Grid
-                            item
-                            container
-                            alignContent='center'
-                            className={classes.iconContainer}
-                        >
-                            {this.state.roundsFinished ? <CheckIcon className={classes.checkIcon} /> : <CircularProgress size={progressSize} />}
+                    <Grid container direction='row'>
+                        <Grid item container alignContent='center' className={classes.iconContainer}>
+                            {this.state.roundsFinished ? (
+                                <CheckIcon className={classes.checkIcon} />
+                            ) : (
+                                <CircularProgress size={progressSize} />
+                            )}
                         </Grid>
                         <Typography>Fetching Rounds</Typography>
                     </Grid>
-                    <Grid
-                        container
-                        direction='row'
-                    >
-                        <Grid
-                            item
-                            container
-                            alignContent='center'
-                            className={classes.iconContainer}
-                        >
-                            {this.state.matches.length != 0 ? <CheckIcon className={classes.checkIcon} /> : <CircularProgress size={progressSize} />}
+                    <Grid container direction='row'>
+                        <Grid item container alignContent='center' className={classes.iconContainer}>
+                            {this.state.matches.length !== 0 ? (
+                                <CheckIcon className={classes.checkIcon} />
+                            ) : (
+                                <CircularProgress size={progressSize} />
+                            )}
                         </Grid>
                         <Typography>Fetching Matches</Typography>
                     </Grid>
-                    <Grid
-                        container
-                        direction='row'
-                        hidden={this.state.matches.length == 0}
-                    >
-                        <Grid
-                            item
-                            container
-                            alignContent='center'
-                            className={classes.iconContainer}
-                        >
-                            {this.state.matchIndex >= this.state.matches.length ? <CheckIcon className={classes.checkIcon} /> : <CircularProgress size={progressSize} />}
+                    <Grid container direction='row' hidden={this.state.matches.length === 0}>
+                        <Grid item container alignContent='center' className={classes.iconContainer}>
+                            {this.state.matchIndex >= this.state.matches.length ? (
+                                <CheckIcon className={classes.checkIcon} />
+                            ) : (
+                                <CircularProgress size={progressSize} />
+                            )}
                         </Grid>
-                        <Typography>{this.state.matchIndex}/{this.state.matches.length} Fetching Match Length</Typography>
+                        <Typography>
+                            {this.state.matchIndex}/{this.state.matches.length} Fetching Match Length
+                        </Typography>
                     </Grid>
-                    <Grid
-                        container
-                        direction='row'
-                        hidden={this.state.matchIndex < this.state.matches.length}
-                    >
-                        <Grid
-                            item
-                            container
-                            alignContent='center'
-                            className={classes.iconContainer}
-                        >
-                            {this.state.bracketNodeIndex >= this.state.matches.length ? <CheckIcon className={classes.checkIcon} /> : <CircularProgress size={progressSize} />}
+                    <Grid container direction='row' hidden={this.state.matchIndex < this.state.matches.length}>
+                        <Grid item container alignContent='center' className={classes.iconContainer}>
+                            {this.state.bracketNodeIndex >= this.state.matches.length ? (
+                                <CheckIcon className={classes.checkIcon} />
+                            ) : (
+                                <CircularProgress size={progressSize} />
+                            )}
                         </Grid>
-                        <Typography>{this.state.bracketNodeIndex}/{this.state.matches.length} Fetching Bracket Nodes</Typography>
+                        <Typography>
+                            {this.state.bracketNodeIndex}/{this.state.matches.length} Fetching Bracket Nodes
+                        </Typography>
                     </Grid>
                 </DialogContent>
             </Dialog>
