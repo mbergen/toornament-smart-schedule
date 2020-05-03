@@ -471,6 +471,7 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                     total={this.state.applyTotal}
                 />
                 <img src={'./PoweredbyToor_Black.png'} className={classes.toorImg} alt='Powered By Toornament'></img>
+                <Typography variant='body2' color='textSecondary'>{process.env.REACT_APP_VERSION || 'Version not found'}</Typography>
             </div>
         );
     }
