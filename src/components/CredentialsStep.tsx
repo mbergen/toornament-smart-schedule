@@ -1,22 +1,24 @@
 import React from 'react';
-import { Typography, Button, withStyles, createStyles, Theme, TextField, Grid } from '@material-ui/core';
-import ToornamentHelper from './ToornamentHelper';
+import { Typography, Button, Theme, TextField, Grid } from '@mui/material';
+import ToornamentHelper from '../ToornamentHelper';
+import { createStyles, withStyles } from '@mui/styles';
 
-const styles = (theme: Theme) => createStyles({
-    textField: {
-        marginTop: theme.spacing(1),
-        marginBottom: theme.spacing(1),
-    },
-    button: {
-        marginTop: theme.spacing(1),
-        marginBottom: theme.spacing(1),
-    }
-})
+const styles = (theme: Theme) =>
+    createStyles({
+        textField: {
+            marginTop: theme.spacing(1),
+            marginBottom: theme.spacing(1),
+        },
+        button: {
+            marginTop: theme.spacing(1),
+            marginBottom: theme.spacing(1),
+        },
+    });
 
 interface CredentialsStepState {
-    apiKey: string,
-    clientId: string,
-    clientSecret: string,
+    apiKey: string;
+    clientId: string;
+    clientSecret: string;
 }
 
 interface CredentialsStepProps {
@@ -33,40 +35,37 @@ class CredentialsStep extends React.Component<CredentialsStepProps, CredentialsS
             apiKey: props.toornamentHelper.getApiKey() || '',
             clientId: '',
             clientSecret: '',
-        }
+        };
     }
 
     handleChangeApiKey = (event: any) => {
         this.props.toornamentHelper.updateApiKey(event.target.value);
         this.setState({ apiKey: event.target.value });
         this.props.credentialsUpdated();
-    }
+    };
 
     handleChangeClientId = (event: any) => {
         this.setState({ clientId: event.target.value });
-    }
+    };
 
     handleChangeClientSecret = (event: any) => {
         this.setState({ clientSecret: event.target.value });
-    }
+    };
 
     requestToken = () => {
         if (!this.props.toornamentHelper.tokenIsValid()) {
             const callback = () => {
                 this.props.credentialsUpdated();
-            }
+            };
             this.props.toornamentHelper.getToken(this.state.clientId, this.state.clientSecret, callback);
         }
-    }
+    };
 
     render() {
         const { classes } = this.props;
 
         return (
-            <Grid
-                container
-                direction='column'
-            >
+            <Grid container direction='column'>
                 <TextField
                     label='Api Key'
                     className={classes.textField}
@@ -93,16 +92,16 @@ class CredentialsStep extends React.Component<CredentialsStepProps, CredentialsS
                 <div>
                     <Button
                         variant='contained'
-                        color={!this.props.toornamentHelper.tokenIsValid() ? 'primary' : 'default'}
+                        color={!this.props.toornamentHelper.tokenIsValid() ? 'primary' : 'inherit'}
                         className={classes.button}
                         onClick={this.requestToken}
                     >
                         Request Token
-                </Button>
+                    </Button>
                 </div>
-                <Typography
-                    hidden={this.props.toornamentHelper.tokenIsValid()}
-                >You must request a token to proceed.</Typography>
+                <Typography hidden={this.props.toornamentHelper.tokenIsValid()}>
+                    You must request a token to proceed.
+                </Typography>
             </Grid>
         );
     }

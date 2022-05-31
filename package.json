@@ -6,19 +6,23 @@
   "author": "Philipp Spinner",
   "dependencies": {
     "@date-io/moment": "^1.3.11",
-    "@material-ui/core": "^4.4.2",
-    "@material-ui/icons": "^4.4.1",
-    "@material-ui/lab": "^4.0.0-alpha.26",
-    "@material-ui/pickers": "^3.2.6",
+    "@emotion/react": "^11.9.0",
+    "@emotion/styled": "^11.8.1",
+    "@mui/icons-material": "^5.8.0",
+    "@mui/material": "^5.8.1",
+    "@mui/styles": "^5.8.0",
+    "@mui/x-date-pickers": "^5.0.0-alpha.4",
+    "@openapitools/openapi-generator-cli": "^2.5.1",
     "@types/jest": "24.0.18",
     "@types/node": "12.7.5",
     "@types/react": "18.0.9",
+    "axios": "^0.27.2",
     "gh-pages": "^2.1.1",
     "moment": "^2.24.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-scripts": "^5.0.1",
-    "typescript": "3.6.3"
+    "typescript": "4.7.2"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -26,7 +30,17 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "openapi-generate-all": "npm run openapi-generate-toornament-oauth2 | npm run openapi-generate-toornament-tournament | npm run openapi-generate-toornament-stage | npm run openapi-generate-toornament-round | npm run openapi-generate-toornament-group | npm run openapi-generate-toornament-match | npm run openapi-generate-toornament-match_game | npm run openapi-generate-toornament-bracket",
+    "openapi-generate-toornament-oauth2": "openapi-generator-cli generate -g typescript-axios -i https://api.toornament.com/schema/oas/v2/security/oauth2.json -o ./src/openapi/toornament/oauth2",
+    "openapi-generate-toornament-tournament": "openapi-generator-cli generate -g typescript-axios -i https://api.toornament.com/schema/oas/v2/organizer/tournament.json -o ./src/openapi/toornament/tournament",
+    "openapi-generate-toornament-stage": "openapi-generator-cli generate -g typescript-axios -i https://api.toornament.com/schema/oas/v2/organizer/stage.json -o ./src/openapi/toornament/stage",
+    "openapi-generate-toornament-round": "openapi-generator-cli generate -g typescript-axios -i https://api.toornament.com/schema/oas/v2/organizer/round.json -o ./src/openapi/toornament/round",
+    "openapi-generate-toornament-group": "openapi-generator-cli generate -g typescript-axios -i https://api.toornament.com/schema/oas/v2/organizer/group.json -o ./src/openapi/toornament/group",
+    "openapi-generate-toornament-match": "openapi-generator-cli generate -g typescript-axios -i https://api.toornament.com/schema/oas/v2/organizer/match.json -o ./src/openapi/toornament/match",
+    "openapi-generate-toornament-match_game": "openapi-generator-cli generate -g typescript-axios -i https://api.toornament.com/schema/oas/v2/organizer/match_game.json -o ./src/openapi/toornament/match_game",
+    "openapi-generate-toornament-participant": "openapi-generator-cli generate -g typescript-axios -i https://api.toornament.com/schema/oas/v2/organizer/participant.json -o ./src/openapi/toornament/participant",
+    "openapi-generate-toornament-bracket": "openapi-generator-cli generate -g typescript-axios -i https://api.toornament.com/schema/oas/v2/organizer/bracket.json -o ./src/openapi/toornament/bracket"
   },
   "eslintConfig": {
     "extends": "react-app"

@@ -6,14 +6,16 @@ import {
     CircularProgress,
     Typography,
     Theme,
-    createStyles,
-    withStyles,
     DialogContent,
-} from '@material-ui/core';
-import ToornamentHelper from './ToornamentHelper';
-import { ScheduleRound, ScheduleMatch, ScheduleGroup, ScheduleParticipant } from './ScheduleStepper';
-import CheckIcon from '@material-ui/icons/Check';
-import { green } from '@material-ui/core/colors';
+} from '@mui/material';
+import ToornamentHelper from '../ToornamentHelper';
+import CheckIcon from '@mui/icons-material/Check';
+import { green } from '@mui/material/colors';
+import ScheduleGroup from '../domain/ScheduleGroup';
+import ScheduleRound from '../domain/ScheduleRound';
+import ScheduleMatch from '../domain/ScheduleMatch';
+import ScheduleParticipant from '../domain/ScheduleParticipant';
+import { createStyles, withStyles } from '@mui/styles';
 
 const styles = (theme: Theme) =>
     createStyles({

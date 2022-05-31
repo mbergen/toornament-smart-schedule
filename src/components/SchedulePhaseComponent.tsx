@@ -1,9 +1,10 @@
 import React from 'react';
-import { SchedulePhase } from './ConfigurationStep';
-import { Grid, Tooltip, FormControl, Select, InputLabel, Theme, createStyles, withStyles, MenuItem, Fab } from '@material-ui/core';
-import { KeyboardDateTimePicker } from '@material-ui/pickers';
-import TournamentStructure from './TournamenStructure';
-import DeleteIcon from '@material-ui/icons/Delete';
+import { Grid, Tooltip, FormControl, Select, InputLabel, Theme, MenuItem, Fab, TextField } from '@mui/material';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import TournamentStructure from '../TournamenStructure';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SchedulePhase from '../domain/SchedulePhase';
+import { createStyles, withStyles } from '@mui/styles';
 
 const styles = (theme: Theme) => createStyles({
     textField: {
@@ -56,7 +57,8 @@ class PhaseComponent extends React.Component<PhaseComponentProps, any> {
             >
                 <Tooltip title='Select start date'>
                     <div>
-                        <KeyboardDateTimePicker
+                        <DateTimePicker
+                            renderInput={(props) => <TextField {...props} />}
                             disablePast
                             className={classes.textField}
                             ampm={false}

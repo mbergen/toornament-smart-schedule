@@ -1,6 +1,9 @@
-import { ScheduleRound, ScheduleGroup, ScheduleMatch, BracketType } from './ScheduleStepper';
-import { SchedulingMode, ScheduleConfig } from './ConfigurationStep';
 import moment from 'moment';
+import { BracketType } from './domain/BracketType';
+import ScheduleConfig, { SchedulingMode } from './domain/ScheduleConfig';
+import ScheduleGroup from './domain/ScheduleGroup';
+import ScheduleMatch from './domain/ScheduleMatch';
+import ScheduleRound from './domain/ScheduleRound';
 
 interface RoundDependency {
     roundId: string;

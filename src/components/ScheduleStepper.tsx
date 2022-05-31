@@ -6,22 +6,27 @@ import {
     Typography,
     TextField,
     Button,
-    withStyles,
-    createStyles,
     Theme,
     List,
     ListItem,
     ListItemText,
     CircularProgress,
     Grid,
-} from '@material-ui/core';
-import ToornamentHelper from './ToornamentHelper';
+} from '@mui/material';
+import ToornamentHelper from '../ToornamentHelper';
 import CredentialsStep from './CredentialsStep';
-import ConfigurationStep, { ScheduleConfig, SchedulingMode } from './ConfigurationStep';
-import TournamentStructure from './TournamenStructure';
+import ConfigurationStep from './ConfigurationStep';
+import TournamentStructure from '../TournamenStructure';
 import FetchDialog from './FetchDialog';
 import ReviewSchedule from './ReviewSchedule';
 import ApplyDialog from './ApplyDialog';
+import ScheduleStage from '../domain/ScheduleStage';
+import ScheduleConfig, { SchedulingMode } from '../domain/ScheduleConfig';
+import { BracketType } from '../domain/BracketType';
+import ScheduleGroup from '../domain/ScheduleGroup';
+import ScheduleRound from '../domain/ScheduleRound';
+import ScheduleMatch from '../domain/ScheduleMatch';
+import { createStyles, withStyles } from '@mui/styles';
 
 const tournamentIdItemName = 'tss_i_ti';
 const stageIdItemName = 'tss_i_si';
@@ -42,56 +47,6 @@ const styles = (theme: Theme) =>
             maxWidth: 250,
         },
     });
-
-interface ScheduleStage {
-    id: string;
-    name: string;
-    number: number;
-    size: number;
-    type: string;
-}
-
-export enum BracketType {
-    Bracket,
-    Rounds,
-}
-
-export interface ScheduleGroup {
-    id: string;
-    name: string;
-    number: number;
-}
-
-export interface ScheduleRound {
-    id: string;
-    groupId: string;
-    name: string;
-    number: number;
-    size: number;
-    scheduledAt: Date | null;
-    roundLength: number;
-}
-
-export interface ScheduleMatchOpponent {
-    number: number;
-    sourceNodeId: string;
-    sourceType: string;
-}
-
-export interface ScheduleParticipant {
-    id: string;
-    name: string;
-}
-
-export interface ScheduleMatch {
-    id: string;
-    roundId: string;
-    groupId: string;
-    numberOfGames: number;
-    scheduledAt: Date | null;
-    opponents: ScheduleMatchOpponent[];
-    participants: ScheduleParticipant[];
-}
 
 interface ScheduleStepperState {
     activeStep: number;
@@ -427,7 +382,7 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                         );
                     })}
                 </Stepper>
-                <div>
+                <React.Fragment>
                     {this.state.activeStep === this.steps.length ? (
                         <div>
                             <Typography className={classes.instructions}>
@@ -464,7 +419,7 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                             </Grid>
                         </div>
                     )}
-                </div>
+                </React.Fragment>
                 <ApplyDialog
                     open={this.state.applyOpen}
                     progress={this.state.applyProgress}
