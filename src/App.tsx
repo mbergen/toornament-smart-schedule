@@ -1,4 +1,4 @@
-import { createTheme, Paper, Theme } from '@mui/material';
+import { createTheme, Theme } from '@mui/material';
 import { ThemeProvider } from '@mui/styles';
 import React from 'react';
 import SmartScheduleRoot from './components/SmartScheduleRoot';
