@@ -22,7 +22,6 @@ import TournamentStructure from './TournamenStructure';
 import FetchDialog from './FetchDialog';
 import ReviewSchedule from './ReviewSchedule';
 import ApplyDialog from './ApplyDialog';
-import { version } from '../package.json';
 
 const tournamentIdItemName = 'tss_i_ti';
 const stageIdItemName = 'tss_i_si';
@@ -472,7 +471,7 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                     total={this.state.applyTotal}
                 />
                 <img src={'./PoweredbyToor_Black.png'} className={classes.toorImg} alt='Powered By Toornament'></img>
-                <Typography variant='body2' color='textSecondary'>v{version}</Typography>
+                <Typography variant='body2' color='textSecondary'>v{process.env.REACT_APP_VERSION}</Typography>
             </div>
         );
     }
