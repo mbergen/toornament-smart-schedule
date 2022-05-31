@@ -1,7 +1,5 @@
 import React from 'react';
 import { Dialog, DialogTitle, Grid, CircularProgress, Typography, Theme, createStyles, withStyles, DialogContent } from '@material-ui/core';
-import ToornamentHelper from "./ToornamentHelper";
-import { ScheduleRound, ScheduleMatch, ScheduleGroup } from "./ScheduleStepper";
 import CheckIcon from '@material-ui/icons/Check';
 import { green } from '@material-ui/core/colors';
 
@@ -41,7 +39,7 @@ class ApplyDialog extends React.Component<FetchDialogProps, any> {
                             alignContent='center'
                             className={classes.iconContainer}
                         >
-                            {this.props.progress != this.props.total ? <CheckIcon className={classes.checkIcon} /> : <CircularProgress size={progressSize} />}
+                            {this.props.progress !== this.props.total ? <CheckIcon className={classes.checkIcon} /> : <CircularProgress size={progressSize} />}
                         </Grid>
                         <Typography>{this.props.progress}/{this.props.total} Applying Matches</Typography>
                     </Grid>

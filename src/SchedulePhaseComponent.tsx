@@ -91,7 +91,7 @@ class PhaseComponent extends React.Component<PhaseComponentProps, any> {
                         }}
                         disabled={this.props.phase.isFirst}
                     >
-                        {this.props.structure.getRounds().filter(round => round.groupId == this.props.phase.groupId).map((round, index) => {
+                        {this.props.structure.getRounds().filter(round => round.groupId === this.props.phase.groupId).map((round, index) => {
                             return (<MenuItem value={round.id} key={`round-${index}-mi`}>{round.name}</MenuItem>)
                         })}
                     </Select>

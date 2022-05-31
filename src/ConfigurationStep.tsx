@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Typography, Button, withStyles, createStyles, Theme, TextField, Grid, Select, MenuItem,
-    Table, TableHead, TableRow, TableCell, TableBody, FormControl, InputLabel, Tooltip
+    Table, TableHead, TableRow, TableCell, TableBody, FormControl, InputLabel
 } from '@material-ui/core';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import MomentUtils from '@date-io/moment';
@@ -75,9 +75,6 @@ interface ConfigurationStepProps {
 }
 
 class ConfigurationStep extends React.Component<ConfigurationStepProps, {}> {
-    constructor(props: ConfigurationStepProps) {
-        super(props);
-    }
 
     renderMatchLengthConfig = () => {
         const { classes } = this.props;
@@ -146,8 +143,8 @@ class ConfigurationStep extends React.Component<ConfigurationStepProps, {}> {
 
     addPhase = () => {
         const newCfg = this.props.config;
-        const newRound = this.props.structure.getRounds().find(round => this.props.config.phases.findIndex(phase => phase.startingRoundId == round.id) < 0);
-        if (newRound == undefined) {
+        const newRound = this.props.structure.getRounds().find(round => this.props.config.phases.findIndex(phase => phase.startingRoundId === round.id) < 0);
+        if (newRound === undefined) {
             return; //add user feedback
         }
 

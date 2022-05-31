@@ -56,7 +56,7 @@ export default class ToornamentHelper {
     }
 
     public updateApiKey(apiKey: string) {
-        if (apiKey == '') {
+        if (apiKey === '') {
             this.apiKey = null;
             sessionStorage.removeItem(apiKeyItemName);
             return;
@@ -67,7 +67,7 @@ export default class ToornamentHelper {
     }
 
     public hasApiKey() {
-        return this.apiKey != null && this.apiKey != '';
+        return this.apiKey != null && this.apiKey !== '';
     }
 
     public getApiKey(): string | null {

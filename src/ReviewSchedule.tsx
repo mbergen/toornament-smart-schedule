@@ -17,13 +17,11 @@ interface ReviewScheduleProps {
 
 class ReviewSchedule extends React.Component<ReviewScheduleProps, any> {
     getGroupName = (round: ScheduleRound): string => {
-        const group = this.props.structure.getGroups().find(group => group.id == round.groupId);
-        return group != undefined ? group.name : 'Unknown Group';
+        const group = this.props.structure.getGroups().find(group => group.id === round.groupId);
+        return group !== undefined ? group.name : 'Unknown Group';
     }
 
     render() {
-        const { classes } = this.props;
-
         const tableRows = this.props.structure.getRounds().sort((a, b) => {
             if (a.scheduledAt == null) {
                 return -1;
