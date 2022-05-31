@@ -1,8 +1,8 @@
 import React from 'react';
+import { styled } from '@mui/material/styles';
 import {
     Typography,
     Button,
-    Theme,
     TextField,
     Grid,
     Select,
@@ -20,52 +20,62 @@ import TournamentStructure from '../TournamenStructure';
 import SchedulePhaseComponent from './SchedulePhaseComponent';
 import ScheduleConfig, { SchedulingMode } from '../domain/ScheduleConfig';
 import SchedulePhase from '../domain/SchedulePhase';
-import { createStyles, withStyles } from '@mui/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 
-const styles = (theme: Theme) =>
-    createStyles({
-        textField: {
-            marginTop: theme.spacing(1),
-            marginRight: theme.spacing(2),
-            marginBottom: theme.spacing(1),
-            maxWidth: 300,
-        },
-        button: {
-            marginLeft: theme.spacing(2),
-            marginTop: theme.spacing(1),
-            marginRight: theme.spacing(2),
-            marginBottom: theme.spacing(1),
-        },
-        table: {
-            minWidth: 450,
-            maxWidth: 600,
-        },
-        tableHeader: {
-            fontSize: '1em',
-            fontWeight: 'bolder',
-            color: theme.palette.text.primary,
-        },
-        title: {
-            marginTop: theme.spacing(3),
-            marginBottom: theme.spacing(1),
-            borderBottomColor: theme.palette.secondary.main,
-            borderBottomStyle: 'solid',
-            borderBottomWidth: 4,
-            flexShrink: 1,
-        },
-    });
+const PREFIX = 'ConfigurationStep';
+
+const classes = {
+    textField: `${PREFIX}-textField`,
+    button: `${PREFIX}-button`,
+    table: `${PREFIX}-table`,
+    tableHeader: `${PREFIX}-tableHeader`,
+    title: `${PREFIX}-title`,
+};
+
+const StyledGrid = styled(Grid)(({ theme }) => ({
+    [`& .${classes.textField}`]: {
+        marginTop: theme.spacing(1),
+        marginRight: theme.spacing(2),
+        marginBottom: theme.spacing(1),
+        maxWidth: 300,
+    },
+
+    [`& .${classes.button}`]: {
+        marginLeft: theme.spacing(2),
+        marginTop: theme.spacing(1),
+        marginRight: theme.spacing(2),
+        marginBottom: theme.spacing(1),
+    },
+
+    [`& .${classes.table}`]: {
+        minWidth: 450,
+        maxWidth: 600,
+    },
+
+    [`& .${classes.tableHeader}`]: {
+        fontSize: '1em',
+        fontWeight: 'bolder',
+        color: theme.palette.text.primary,
+    },
+
+    [`& .${classes.title}`]: {
+        marginTop: theme.spacing(3),
+        marginBottom: theme.spacing(1),
+        borderBottomColor: theme.palette.secondary.main,
+        borderBottomStyle: 'solid',
+        borderBottomWidth: 4,
+        flexShrink: 1,
+    },
+}));
 
 interface ConfigurationStepProps {
     structure: TournamentStructure;
     config: ScheduleConfig;
     scheduleConfigChanged: (config: ScheduleConfig) => void;
-    classes?: any;
 }
 
-class ConfigurationStep extends React.Component<ConfigurationStepProps, {}> {
+export default class ConfigurationStep extends React.Component<ConfigurationStepProps, {}> {
     renderMatchLengthConfig = () => {
-        const { classes } = this.props;
         return (
             <Table className={classes.table} size='small'>
                 <TableHead>
@@ -151,7 +161,6 @@ class ConfigurationStep extends React.Component<ConfigurationStepProps, {}> {
     };
 
     render() {
-        const { classes } = this.props;
         const modes: SchedulingMode[] = [
             SchedulingMode.Direct,
             SchedulingMode.Daily,
@@ -171,7 +180,7 @@ class ConfigurationStep extends React.Component<ConfigurationStepProps, {}> {
         });
 
         return (
-            <Grid container direction='column'>
+            <StyledGrid container direction='column'>
                 <Typography className={classes.title} variant='h6'>
                     Schedule Mode
                 </Typography>
@@ -216,7 +225,7 @@ class ConfigurationStep extends React.Component<ConfigurationStepProps, {}> {
                     starting phases at the right time and date. If you do not need to use phases just use the first one
                     as the starting date for your tournament.
                 </Typography>
-                <LocalizationProvider  dateAdapter={AdapterMoment}>
+                <LocalizationProvider dateAdapter={AdapterMoment}>
                     {phases}
                     <Button
                         variant='contained'
@@ -226,14 +235,12 @@ class ConfigurationStep extends React.Component<ConfigurationStepProps, {}> {
                     >
                         Add Phase
                     </Button>
-                </LocalizationProvider >
+                </LocalizationProvider>
                 <Typography className={classes.title} variant='h6'>
                     Match Length
                 </Typography>
                 {this.renderMatchLengthConfig()}
-            </Grid>
+            </StyledGrid>
         );
     }
 }
-
-export default withStyles(styles)(ConfigurationStep);

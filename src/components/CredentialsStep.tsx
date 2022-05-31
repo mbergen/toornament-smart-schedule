@@ -1,19 +1,25 @@
 import React from 'react';
-import { Typography, Button, Theme, TextField, Grid } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { Typography, Button, TextField, Grid } from '@mui/material';
 import ToornamentHelper from '../ToornamentHelper';
-import { createStyles, withStyles } from '@mui/styles';
+const PREFIX = 'CredentialsStep';
 
-const styles = (theme: Theme) =>
-    createStyles({
-        textField: {
-            marginTop: theme.spacing(1),
-            marginBottom: theme.spacing(1),
-        },
-        button: {
-            marginTop: theme.spacing(1),
-            marginBottom: theme.spacing(1),
-        },
-    });
+const classes = {
+    textField: `${PREFIX}-textField`,
+    button: `${PREFIX}-button`,
+};
+
+const StyledGrid = styled(Grid)(({ theme }) => ({
+    [`& .${classes.textField}`]: {
+        marginTop: theme.spacing(1),
+        marginBottom: theme.spacing(1),
+    },
+
+    [`& .${classes.button}`]: {
+        marginTop: theme.spacing(1),
+        marginBottom: theme.spacing(1),
+    },
+}));
 
 interface CredentialsStepState {
     apiKey: string;
@@ -27,7 +33,7 @@ interface CredentialsStepProps {
     classes?: any;
 }
 
-class CredentialsStep extends React.Component<CredentialsStepProps, CredentialsStepState> {
+export default class CredentialsStep extends React.Component<CredentialsStepProps, CredentialsStepState> {
     constructor(props: CredentialsStepProps) {
         super(props);
 
@@ -62,10 +68,8 @@ class CredentialsStep extends React.Component<CredentialsStepProps, CredentialsS
     };
 
     render() {
-        const { classes } = this.props;
-
         return (
-            <Grid container direction='column'>
+            <StyledGrid container direction='column'>
                 <TextField
                     label='Api Key'
                     className={classes.textField}
@@ -102,9 +106,7 @@ class CredentialsStep extends React.Component<CredentialsStepProps, CredentialsS
                 <Typography hidden={this.props.toornamentHelper.tokenIsValid()}>
                     You must request a token to proceed.
                 </Typography>
-            </Grid>
+            </StyledGrid>
         );
     }
 }
-
-export default withStyles(styles)(CredentialsStep);

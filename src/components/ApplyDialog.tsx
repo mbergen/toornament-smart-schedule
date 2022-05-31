@@ -1,19 +1,25 @@
 import React from 'react';
-import { Dialog, DialogTitle, Grid, CircularProgress, Typography, Theme, DialogContent } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { Dialog, DialogTitle, Grid, CircularProgress, Typography, DialogContent } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import { green } from '@mui/material/colors';
-import { createStyles, withStyles } from '@mui/styles';
+const PREFIX = 'ApplyDialog';
 
-const styles = (theme: Theme) =>
-    createStyles({
-        checkIcon: {
-            color: green[300],
-        },
-        iconContainer: {
-            width: 20,
-            marginRight: theme.spacing(1),
-        },
-    });
+const classes = {
+    checkIcon: `${PREFIX}-checkIcon`,
+    iconContainer: `${PREFIX}-iconContainer`,
+};
+
+const StyledDialog = styled(Dialog)(({ theme }) => ({
+    [`& .${classes.checkIcon}`]: {
+        color: green[300],
+    },
+
+    [`& .${classes.iconContainer}`]: {
+        width: 20,
+        marginRight: theme.spacing(1),
+    },
+}));
 
 interface FetchDialogProps {
     open: boolean;
@@ -22,12 +28,11 @@ interface FetchDialogProps {
     classes?: any;
 }
 
-class ApplyDialog extends React.Component<FetchDialogProps, any> {
+export default class ApplyDialog extends React.Component<FetchDialogProps, any> {
     render() {
-        const { classes } = this.props;
         const progressSize = 20;
         return (
-            <Dialog open={this.props.open}>
+            <StyledDialog open={this.props.open}>
                 <DialogTitle>Applying Changes</DialogTitle>
                 <DialogContent>
                     <Grid container direction='row'>
@@ -43,9 +48,7 @@ class ApplyDialog extends React.Component<FetchDialogProps, any> {
                         </Typography>
                     </Grid>
                 </DialogContent>
-            </Dialog>
+            </StyledDialog>
         );
     }
 }
-
-export default withStyles(styles)(ApplyDialog);

@@ -1,48 +1,65 @@
 import React from 'react';
-import { Theme, Typography, AppBar, Toolbar } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { Typography, AppBar, Toolbar } from '@mui/material';
 import ToornamentHelper from '../ToornamentHelper';
 import ScheduleStepper from '../components/ScheduleStepper';
-import { createStyles, withStyles } from '@mui/styles';
+import Footer from './Footer';
+const PREFIX = 'SmartScheduleRoot';
 
-const styles = (theme: Theme) =>
-    createStyles({
-        root: {
-            display: 'flex',
-            justifyContent: 'center',
-        },
-        menuButton: {
-            marginRight: theme.spacing(2),
-        },
-        hide: {
-            display: 'none',
-        },
-        content: {
-            flexGrow: 1,
-            maxWidth: 1000,
-            padding: theme.spacing(3),
-            marginTop: theme.spacing(6),
-        },
-        button: {
-            marginLeft: 16,
-            marginTop: 8,
-            marginRight: 16,
-            marginBottom: 8,
-        },
-        paper: {
-            width: '100%',
-            marginTop: theme.spacing(3),
-            overflowX: 'auto',
-        },
-        table: {
-            minWidth: 650,
-        },
-    });
+const classes = {
+    root: `${PREFIX}-root`,
+    menuButton: `${PREFIX}-menuButton`,
+    hide: `${PREFIX}-hide`,
+    content: `${PREFIX}-content`,
+    button: `${PREFIX}-button`,
+    paper: `${PREFIX}-paper`,
+    table: `${PREFIX}-table`,
+};
+
+const Root = styled('div')(({ theme }) => ({
+    [`&.${classes.root}`]: {
+        display: 'flex',
+        justifyContent: 'center',
+    },
+
+    [`& .${classes.menuButton}`]: {
+        marginRight: theme.spacing(2),
+    },
+
+    [`& .${classes.hide}`]: {
+        display: 'none',
+    },
+
+    [`& .${classes.content}`]: {
+        flexGrow: 1,
+        maxWidth: 1000,
+        padding: theme.spacing(3),
+        marginTop: theme.spacing(6),
+    },
+
+    [`& .${classes.button}`]: {
+        marginLeft: 16,
+        marginTop: 8,
+        marginRight: 16,
+        marginBottom: 8,
+    },
+
+    [`& .${classes.paper}`]: {
+        width: '100%',
+        marginTop: theme.spacing(3),
+        overflowX: 'auto',
+    },
+
+    [`& .${classes.table}`]: {
+        minWidth: 650,
+    },
+}));
 
 interface AppState {
     toornamentHelper: ToornamentHelper;
 }
 
-class SmartScheduleRoot extends React.Component<any, AppState> {
+export default class SmartScheduleRoot extends React.Component<any, AppState> {
     constructor(props: any) {
         super(props);
 
@@ -52,11 +69,9 @@ class SmartScheduleRoot extends React.Component<any, AppState> {
     }
 
     render() {
-        const { classes } = this.props;
-
         return (
-            <div className={classes.root}>
-                <AppBar position='fixed' className={classes.appBar}>
+            <Root className={classes.root}>
+                <AppBar position='fixed'>
                     <Toolbar variant='dense'>
                         <Typography variant='h6' noWrap>
                             Toornament Smart Schedule
@@ -65,10 +80,9 @@ class SmartScheduleRoot extends React.Component<any, AppState> {
                 </AppBar>
                 <main className={classes.content}>
                     <ScheduleStepper toornamentHelper={this.state.toornamentHelper} />
+                    <Footer />
                 </main>
-            </div>
+            </Root>
         );
     }
 }
-
-export default withStyles(styles)(SmartScheduleRoot);

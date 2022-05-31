@@ -1,4 +1,5 @@
 import React from 'react';
+import { styled } from '@mui/material/styles';
 import {
     Stepper,
     Step,
@@ -6,7 +7,6 @@ import {
     Typography,
     TextField,
     Button,
-    Theme,
     List,
     ListItem,
     ListItemText,
@@ -26,27 +26,31 @@ import { BracketType } from '../domain/BracketType';
 import ScheduleGroup from '../domain/ScheduleGroup';
 import ScheduleRound from '../domain/ScheduleRound';
 import ScheduleMatch from '../domain/ScheduleMatch';
-import { createStyles, withStyles } from '@mui/styles';
+const PREFIX = 'ScheduleStepper';
+
+const classes = {
+    root: `${PREFIX}-root`,
+    button: `${PREFIX}-button`,
+    instructions: `${PREFIX}-instructions`,
+};
+
+const Root = styled('div')(({ theme }) => ({
+    [`& .${classes.root}`]: {
+        width: '90%',
+    },
+
+    [`& .${classes.button}`]: {
+        marginRight: theme.spacing(1),
+    },
+
+    [`& .${classes.instructions}`]: {
+        marginTop: theme.spacing(1),
+        marginBottom: theme.spacing(1),
+    },
+}));
 
 const tournamentIdItemName = 'tss_i_ti';
 const stageIdItemName = 'tss_i_si';
-
-const styles = (theme: Theme) =>
-    createStyles({
-        root: {
-            width: '90%',
-        },
-        button: {
-            marginRight: theme.spacing(1),
-        },
-        instructions: {
-            marginTop: theme.spacing(1),
-            marginBottom: theme.spacing(1),
-        },
-        toorImg: {
-            maxWidth: 250,
-        },
-    });
 
 interface ScheduleStepperState {
     activeStep: number;
@@ -68,7 +72,7 @@ interface ScheduleStepperProps {
     classes?: any;
 }
 
-class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStepperState> {
+export default class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStepperState> {
     steps = ['Credentials', 'Tournament', 'Stage', 'Configuration', 'Review'];
 
     constructor(props: ScheduleStepperProps) {
@@ -280,7 +284,6 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
     };
 
     getStepContent = (step: number) => {
-        const { classes } = this.props;
         switch (step) {
             case 0:
                 return (
@@ -294,7 +297,6 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                     <div>
                         <TextField
                             label='Tournament Id'
-                            className={classes.textField}
                             value={this.state.tournamentId}
                             onChange={this.handleChangeTournamentId}
                             margin='dense'
@@ -368,9 +370,8 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
     };
 
     render() {
-        const { classes } = this.props;
         return (
-            <div className={classes.root}>
+            <Root className={classes.root}>
                 <Stepper activeStep={this.state.activeStep}>
                     {this.steps.map((label, index) => {
                         const stepProps: { completed?: boolean } = {};
@@ -425,11 +426,7 @@ class ScheduleStepper extends React.Component<ScheduleStepperProps, ScheduleStep
                     progress={this.state.applyProgress}
                     total={this.state.applyTotal}
                 />
-                <img src={'./PoweredbyToor_Black.png'} className={classes.toorImg} alt='Powered By Toornament'></img>
-                <Typography variant='body2' color='textSecondary'>v{process.env.REACT_APP_VERSION}</Typography>
-            </div>
+            </Root>
         );
     }
 }
-
-export default withStyles(styles)(ScheduleStepper);

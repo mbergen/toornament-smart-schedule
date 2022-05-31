@@ -1,18 +1,14 @@
 import React from 'react';
-import { Theme, Table, TableBody, TableRow, TableCell } from '@mui/material';
+import { Table, TableBody, TableRow, TableCell } from '@mui/material';
 import TournamentStructure from '../TournamenStructure';
 import moment from 'moment';
 import ScheduleRound from '../domain/ScheduleRound';
-import { createStyles, withStyles } from '@mui/styles';
-
-const styles = (theme: Theme) => createStyles({});
 
 interface ReviewScheduleProps {
     structure: TournamentStructure;
-    classes?: any;
 }
 
-class ReviewSchedule extends React.Component<ReviewScheduleProps, any> {
+export default class ReviewSchedule extends React.Component<ReviewScheduleProps, any> {
     getGroupName = (round: ScheduleRound): string => {
         const group = this.props.structure.getGroups().find((group) => group.id === round.groupId);
         return group !== undefined ? group.name : 'Unknown Group';
@@ -53,5 +49,3 @@ class ReviewSchedule extends React.Component<ReviewScheduleProps, any> {
         );
     }
 }
-
-export default withStyles(styles)(ReviewSchedule);

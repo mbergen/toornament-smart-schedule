@@ -1,11 +1,11 @@
 import React from 'react';
+import { styled } from '@mui/material/styles';
 import {
     Dialog,
     DialogTitle,
     Grid,
     CircularProgress,
     Typography,
-    Theme,
     DialogContent,
 } from '@mui/material';
 import ToornamentHelper from '../ToornamentHelper';
@@ -15,18 +15,27 @@ import ScheduleGroup from '../domain/ScheduleGroup';
 import ScheduleRound from '../domain/ScheduleRound';
 import ScheduleMatch from '../domain/ScheduleMatch';
 import ScheduleParticipant from '../domain/ScheduleParticipant';
-import { createStyles, withStyles } from '@mui/styles';
+const PREFIX = 'FetchDialog';
 
-const styles = (theme: Theme) =>
-    createStyles({
-        checkIcon: {
-            color: green[300],
-        },
-        iconContainer: {
-            width: 20,
-            marginRight: theme.spacing(1),
-        },
-    });
+const classes = {
+    checkIcon: `${PREFIX}-checkIcon`,
+    iconContainer: `${PREFIX}-iconContainer`
+};
+
+const StyledDialog = styled(Dialog)((
+    {
+        theme
+    }
+) => ({
+    [`& .${classes.checkIcon}`]: {
+        color: green[300],
+    },
+
+    [`& .${classes.iconContainer}`]: {
+        width: 20,
+        marginRight: theme.spacing(1),
+    }
+}));
 
 interface FetchDialogProps {
     open: boolean;
@@ -61,7 +70,7 @@ function getDefaultFetchDialogState(): FetchDialogState {
     };
 }
 
-class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
+export default class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
     fetchOnUpdate: boolean = false;
 
     constructor(props: FetchDialogProps) {
@@ -206,10 +215,9 @@ class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
     }
 
     render() {
-        const { classes } = this.props;
         const progressSize = 20;
         return (
-            <Dialog open={this.props.open}>
+            <StyledDialog open={this.props.open}>
                 <DialogTitle>Fetching Tournament Properties...</DialogTitle>
                 <DialogContent>
                     <Grid container direction='row'>
@@ -267,9 +275,7 @@ class FetchDialog extends React.Component<FetchDialogProps, FetchDialogState> {
                         </Typography>
                     </Grid>
                 </DialogContent>
-            </Dialog>
+            </StyledDialog>
         );
     }
 }
-
-export default withStyles(styles)(FetchDialog);
