@@ -27,12 +27,12 @@ export default class ToornamentHelper {
         request.open('POST', 'https://api.toornament.com/oauth/v2/token');
         request.setRequestHeader('X-Api-Key', this.apiKey);
         request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        request.addEventListener('load', (event) => {
+        request.addEventListener('load', (_) => {
             const result = JSON.parse(request.responseText);
             this.updateToken(result.access_token, result.expires_in);
             callback();
         });
-        const body = `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}&scope=organizer:result`
+        const body = `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}&scope=organizer:result`;
         request.send(body);
     }
 
@@ -79,7 +79,7 @@ export default class ToornamentHelper {
         const expireDate = expireMoment.toDate();
         sessionStorage.setItem(accessTokenItemName, newToken);
         sessionStorage.setItem(expireDateItemName, JSON.stringify(expireDate));
-        this.token = { accessToken: newToken, expireDate: expireDate }
+        this.token = { accessToken: newToken, expireDate: expireDate };
     }
 
     public tokenIsValid(): boolean {
@@ -94,8 +94,15 @@ export default class ToornamentHelper {
         return true;
     }
 
-    public rangedToornamentGETAPICall(ressource: string, paginationIdentifier: string, callback: (result: any[]) => void, viewerCall: boolean = false,
-        customHeaders: { name: string, value: string }[] = [], maxResults: number = -1, rangeWidth: number = 50): boolean {
+    public rangedToornamentGETAPICall(
+        ressource: string,
+        paginationIdentifier: string,
+        callback: (result: any[]) => void,
+        viewerCall: boolean = false,
+        customHeaders: { name: string; value: string }[] = [],
+        maxResults: number = -1,
+        rangeWidth: number = 50
+    ): boolean {
         if (this.apiKey == null) {
             return false;
         }
@@ -122,19 +129,42 @@ export default class ToornamentHelper {
                     callback(finalResult);
                 } else {
                     rangeOffset += rangeStep;
-                    this.makePagedAPIGETCall(ressource, paginationIdentifier, minRange + rangeOffset, maxRange + rangeOffset, apiCallback, viewerCall, customHeaders);
+                    this.makePagedAPIGETCall(
+                        ressource,
+                        paginationIdentifier,
+                        minRange + rangeOffset,
+                        maxRange + rangeOffset,
+                        apiCallback,
+                        viewerCall,
+                        customHeaders
+                    );
                 }
             } else {
                 console.error(result);
             }
         };
-        this.makePagedAPIGETCall(ressource, paginationIdentifier, minRange, maxRange, apiCallback, viewerCall, customHeaders);
+        this.makePagedAPIGETCall(
+            ressource,
+            paginationIdentifier,
+            minRange,
+            maxRange,
+            apiCallback,
+            viewerCall,
+            customHeaders
+        );
 
         return true;
     }
 
-    private makePagedAPIGETCall(ressource: string, paginationIdentifier: string, rangeMin: number, rangeMax: number,
-        callback: (result: any, status: number, remainingItems: number) => void, viewerCall: boolean = true, customHeaders: { name: string, value: string }[] = []) {
+    private makePagedAPIGETCall(
+        ressource: string,
+        paginationIdentifier: string,
+        rangeMin: number,
+        rangeMax: number,
+        callback: (result: any, status: number, remainingItems: number) => void,
+        viewerCall: boolean = true,
+        customHeaders: { name: string; value: string }[] = []
+    ) {
         if (this.apiKey == null) {
             return false;
         }
@@ -153,13 +183,13 @@ export default class ToornamentHelper {
         }
 
         request.setRequestHeader('Range', `${paginationIdentifier}=${rangeMin}-${rangeMax}`);
-        customHeaders.forEach(header => request.setRequestHeader(header.name, header.value));
+        customHeaders.forEach((header) => request.setRequestHeader(header.name, header.value));
         request.addEventListener('load', (_) => {
             if (request.status >= 200 && request.status < 300) {
                 const result = JSON.parse(request.responseText);
                 const remainingItems = result.length >= 50 ? 50 : 0;
                 callback(result, request.status, remainingItems);
-            } else if (request.status ) {
+            } else if (request.status) {
                 callback([], 200, 0);
             } else {
                 callback(request.statusText, request.status, NaN);
@@ -168,8 +198,12 @@ export default class ToornamentHelper {
         request.send();
     }
 
-    private makeAPIGETCall(ressource: string, callback: (result: any, status: number) => void, viewerCall: boolean = true,
-        customHeaders: { name: string, value: string }[] = []) {
+    private makeAPIGETCall(
+        ressource: string,
+        callback: (result: any, status: number) => void,
+        viewerCall: boolean = true,
+        customHeaders: { name: string; value: string }[] = []
+    ) {
         if (this.apiKey == null) {
             return false;
         }
@@ -187,7 +221,7 @@ export default class ToornamentHelper {
             request.setRequestHeader('Authorization', `Bearer ${this.token!.accessToken}`);
         }
 
-        customHeaders.forEach(header => request.setRequestHeader(header.name, header.value));
+        customHeaders.forEach((header) => request.setRequestHeader(header.name, header.value));
         request.addEventListener('load', (event) => {
             if (request.status >= 200 && request.status < 300) {
                 const result = JSON.parse(request.responseText);
@@ -200,49 +234,58 @@ export default class ToornamentHelper {
     }
 
     public getOrganizerMatches(tournamentId: string, stageId: string, callback: (results: any[]) => void) {
-        let ressource = `/tournaments/${tournamentId}/matches?stage_ids=${stageId}`
+        let ressource = `/tournaments/${tournamentId}/matches?stage_ids=${stageId}`;
         this.rangedToornamentGETAPICall(ressource, 'matches', callback);
     }
 
     public getOrganizerRounds(tournamentId: string, stageId: string, callback: (result: any) => void) {
-        let ressource = `/tournaments/${tournamentId}/rounds?stage_ids=${stageId}`
+        let ressource = `/tournaments/${tournamentId}/rounds?stage_ids=${stageId}`;
         this.rangedToornamentGETAPICall(ressource, 'rounds', callback, false);
     }
 
     public getOrganizerStages(tournamentId: string, callback: (result: any) => void) {
-        let ressource = `/tournaments/${tournamentId}/stages`
+        let ressource = `/tournaments/${tournamentId}/stages`;
         this.makeAPIGETCall(ressource, callback, false);
     }
 
     public getOrganizerTournament(tournamentId: string) {
-        let ressource = `/tournaments/${tournamentId}`
-        this.makeAPIGETCall(ressource, (result) => {
-            console.log(result);
-        }, false);
+        let ressource = `/tournaments/${tournamentId}`;
+        this.makeAPIGETCall(
+            ressource,
+            (result) => {
+                console.log(result);
+            },
+            false
+        );
     }
 
     public getOrganizerMatchGames(tournamentId: string, matchId: string, callback: (result: any) => void) {
-        let ressource = `/tournaments/${tournamentId}/matches/${matchId}/games`
+        let ressource = `/tournaments/${tournamentId}/matches/${matchId}/games`;
         this.rangedToornamentGETAPICall(ressource, 'games', callback, false);
     }
 
     public getBracketNodes(tournamentId: string, stageId: string, callback: (result: any) => void) {
-        let ressource = `/tournaments/${tournamentId}/stages/${stageId}/bracket-nodes`
+        let ressource = `/tournaments/${tournamentId}/stages/${stageId}/bracket-nodes`;
         this.rangedToornamentGETAPICall(ressource, 'nodes', callback, true);
     }
 
     public getOrganizerGroups(tournamentId: string, stageId: string, callback: (result: any) => void) {
-        let ressource = `/tournaments/${tournamentId}/groups?stage_ids=${stageId}`
+        let ressource = `/tournaments/${tournamentId}/groups?stage_ids=${stageId}`;
         this.rangedToornamentGETAPICall(ressource, 'groups', callback, false);
     }
 
-    public scheduleMatch(tournamentId: string, matchId: string, date: Date, callback: (result: any, requestStatus: number) => void) {
+    public scheduleMatch(
+        tournamentId: string,
+        matchId: string,
+        date: Date,
+        callback: (result: any, requestStatus: number) => void
+    ) {
         if (this.apiKey == null) {
             return false;
         }
 
         const ressource = `https://api.toornament.com/organizer/v2/tournaments/${tournamentId}/matches/${matchId}`;
-        const requestBody = { scheduled_datetime: moment(date).format('YYYY-MM-DDTHH:mm:ssZ') } // 2015-12-31T00:00:00+00:00
+        const requestBody = { scheduled_datetime: moment(date).format('YYYY-MM-DDTHH:mm:ssZ') }; // 2015-12-31T00:00:00+00:00
         let request = new XMLHttpRequest();
         request.open('PATCH', ressource);
         request.setRequestHeader('X-Api-Key', this.apiKey);

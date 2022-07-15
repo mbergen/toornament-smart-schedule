@@ -1,66 +1,22 @@
 import React from 'react';
 import { styled } from '@mui/material/styles';
-import { Typography, AppBar, Toolbar } from '@mui/material';
+import { Typography, AppBar, Toolbar, Paper, IconButton, Grid, Tooltip } from '@mui/material';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ToornamentHelper from '../ToornamentHelper';
 import ScheduleStepper from '../components/ScheduleStepper';
-import Footer from './Footer';
-const PREFIX = 'SmartScheduleRoot';
-
-const classes = {
-    root: `${PREFIX}-root`,
-    menuButton: `${PREFIX}-menuButton`,
-    hide: `${PREFIX}-hide`,
-    content: `${PREFIX}-content`,
-    button: `${PREFIX}-button`,
-    paper: `${PREFIX}-paper`,
-    table: `${PREFIX}-table`,
-};
-
-const Root = styled('div')(({ theme }) => ({
-    [`&.${classes.root}`]: {
-        display: 'flex',
-        justifyContent: 'center',
-    },
-
-    [`& .${classes.menuButton}`]: {
-        marginRight: theme.spacing(2),
-    },
-
-    [`& .${classes.hide}`]: {
-        display: 'none',
-    },
-
-    [`& .${classes.content}`]: {
-        flexGrow: 1,
-        maxWidth: 1000,
-        padding: theme.spacing(3),
-        marginTop: theme.spacing(6),
-    },
-
-    [`& .${classes.button}`]: {
-        marginLeft: 16,
-        marginTop: 8,
-        marginRight: 16,
-        marginBottom: 8,
-    },
-
-    [`& .${classes.paper}`]: {
-        width: '100%',
-        marginTop: theme.spacing(3),
-        overflowX: 'auto',
-    },
-
-    [`& .${classes.table}`]: {
-        minWidth: 650,
-    },
-}));
 
 interface AppState {
     toornamentHelper: ToornamentHelper;
 }
 
-export default class SmartScheduleRoot extends React.Component<any, AppState> {
-    constructor(props: any) {
+interface SmartScheduleRootProps {
+    toggleDarkMode: () => void;
+    darkMode: boolean;
+}
+
+export default class SmartScheduleRoot extends React.Component<SmartScheduleRootProps, AppState> {
+    constructor(props: SmartScheduleRootProps) {
         super(props);
 
         this.state = {
@@ -70,19 +26,34 @@ export default class SmartScheduleRoot extends React.Component<any, AppState> {
 
     render() {
         return (
-            <Root className={classes.root}>
+            <React.Fragment>
                 <AppBar position='fixed'>
                     <Toolbar variant='dense'>
-                        <Typography variant='h6' noWrap>
-                            Toornament Smart Schedule
-                        </Typography>
+                        <Tooltip title={`v${process.env.REACT_APP_VERSION}`}>
+                            <Typography variant='h6' noWrap sx={{ flexGrow: 1 }}>
+                                Toornament Smart Schedule
+                            </Typography>
+                        </Tooltip>
+                        <Tooltip title={'Toggle Dark Mode'}>
+                            <IconButton onClick={this.props.toggleDarkMode} color='inherit'>
+                                {this.props.darkMode ? <Brightness4Icon /> : <DarkModeIcon />}
+                            </IconButton>
+                        </Tooltip>
                     </Toolbar>
                 </AppBar>
-                <main className={classes.content}>
+                <Paper
+                    component='main'
+                    elevation={4}
+                    sx={{
+                        margin: 'auto',
+                        maxWidth: 1064,
+                        padding: 3,
+                        marginTop: 8,
+                    }}
+                >
                     <ScheduleStepper toornamentHelper={this.state.toornamentHelper} />
-                    <Footer />
-                </main>
-            </Root>
+                </Paper>
+            </React.Fragment>
         );
     }
 }

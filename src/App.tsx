@@ -1,5 +1,4 @@
-import { createTheme, Theme } from '@mui/material';
-import { ThemeProvider } from '@mui/styles';
+import { createTheme, CssBaseline, Paper, Theme, ThemeProvider } from '@mui/material';
 import React from 'react';
 import SmartScheduleRoot from './components/SmartScheduleRoot';
 
@@ -14,7 +13,11 @@ export default class App extends React.Component<any, AppState> {
     constructor(props: any) {
         super(props);
 
-        this.lightTheme = createTheme();
+        this.lightTheme = createTheme({
+            palette: {
+                mode: 'light',
+            },
+        });
         this.darkTheme = createTheme({
             palette: {
                 mode: 'dark',
@@ -24,26 +27,22 @@ export default class App extends React.Component<any, AppState> {
         this.state = {
             useDarkMode: this.isDarkModeEnabled(),
         };
-
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', this.updateDarkMode);
     }
 
     isDarkModeEnabled(): boolean {
         return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
 
-    updateDarkMode = (event: MediaQueryListEvent) => {
-        const browserIsInDarkMode = event.matches;
-
-        if (browserIsInDarkMode !== this.state.useDarkMode) {
-            this.setState({ useDarkMode: browserIsInDarkMode });
-        }
+    toggleDarkMode = () => {
+        console.log(this.lightTheme, this.darkTheme);
+        this.setState({ useDarkMode: !this.state.useDarkMode });
     };
 
     render() {
         return (
             <ThemeProvider theme={this.state.useDarkMode ? this.darkTheme : this.lightTheme}>
-                <SmartScheduleRoot />
+                <CssBaseline />
+                <SmartScheduleRoot toggleDarkMode={this.toggleDarkMode} darkMode={this.state.useDarkMode} />
             </ThemeProvider>
         );
     }
