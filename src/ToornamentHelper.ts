@@ -154,24 +154,13 @@ export default class ToornamentHelper {
 
         request.setRequestHeader('Range', `${paginationIdentifier}=${rangeMin}-${rangeMax}`);
         customHeaders.forEach(header => request.setRequestHeader(header.name, header.value));
-        request.addEventListener('load', (event) => {
+        request.addEventListener('load', (_) => {
             if (request.status >= 200 && request.status < 300) {
-                let remainingItems = 0;
                 const result = JSON.parse(request.responseText);
-                const regex = /.*\s*(?<start>\d+)-(?<end>\d+)\/(?<total>\d+)/;
-                const contentRangeHeader = request.getResponseHeader('Content-Range');
-                if (contentRangeHeader != null) {
-                    const contentRange = contentRangeHeader.match(regex);
-                    if (contentRange != null && contentRange.length >= 4) {
-                        const endIndex = Number(contentRange.groups!['end']);
-                        const totalItems = Number(contentRange.groups!['total']);
-                        remainingItems = Math.max(remainingItems, totalItems - endIndex - 1);
-                    }
-                } else {
-                    remainingItems = result.length >= 50 ? 50 : 0;
-                }
-
+                const remainingItems = result.length >= 50 ? 50 : 0;
                 callback(result, request.status, remainingItems);
+            } else if (request.status ) {
+                callback([], 200, 0);
             } else {
                 callback(request.statusText, request.status, NaN);
             }
