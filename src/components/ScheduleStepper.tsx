@@ -108,7 +108,6 @@ export default class ScheduleStepper extends React.Component<ScheduleStepperProp
             case 1:
                 this.setState({ fetching: true });
                 this.props.toornamentHelper.getOrganizerStages(this.state.tournamentId, (results: any[]) => {
-                    console.log(results);
                     const stages: ScheduleStage[] = results.map((result) => {
                         return {
                             id: result.id,
@@ -182,8 +181,7 @@ export default class ScheduleStepper extends React.Component<ScheduleStepperProp
             const round = rounds.find((round) => round.id === match.roundId) || rounds[0];
             const continueApplying = () => {
                 currentIndex++;
-                this.setState({ applyProgress: currentIndex });
-                scheduleNext();
+                this.setState({ applyProgress: currentIndex }, scheduleNext);
             };
 
             if (round.scheduledAt === null && match.scheduledAt === null) {

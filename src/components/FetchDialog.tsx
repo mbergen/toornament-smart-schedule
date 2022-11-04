@@ -1,13 +1,6 @@
 import React from 'react';
 import { styled } from '@mui/material/styles';
-import {
-    Dialog,
-    DialogTitle,
-    Grid,
-    CircularProgress,
-    Typography,
-    DialogContent,
-} from '@mui/material';
+import { Dialog, DialogTitle, Grid, CircularProgress, Typography, DialogContent } from '@mui/material';
 import ToornamentHelper from '../ToornamentHelper';
 import CheckIcon from '@mui/icons-material/Check';
 import { green } from '@mui/material/colors';
@@ -19,14 +12,10 @@ const PREFIX = 'FetchDialog';
 
 const classes = {
     checkIcon: `${PREFIX}-checkIcon`,
-    iconContainer: `${PREFIX}-iconContainer`
+    iconContainer: `${PREFIX}-iconContainer`,
 };
 
-const StyledDialog = styled(Dialog)((
-    {
-        theme
-    }
-) => ({
+const StyledDialog = styled(Dialog)(({ theme }) => ({
     [`& .${classes.checkIcon}`]: {
         color: green[300],
     },
@@ -34,7 +23,7 @@ const StyledDialog = styled(Dialog)((
     [`& .${classes.iconContainer}`]: {
         width: 20,
         marginRight: theme.spacing(1),
-    }
+    },
 }));
 
 interface FetchDialogProps {
@@ -119,7 +108,7 @@ export default class FetchDialog extends React.Component<FetchDialogProps, Fetch
         });
 
         toornamentHelper.getOrganizerMatches(tournamentId, stageId, (matchResults: any[]) => {
-            const matches = matchResults.map((result) => {
+            const matches: ScheduleMatch[] = matchResults.map((result) => {
                 const participants: ScheduleParticipant[] = [];
                 result.opponents.forEach((opponent: any) => {
                     if (opponent.participant) {
@@ -141,62 +130,61 @@ export default class FetchDialog extends React.Component<FetchDialogProps, Fetch
                 };
             });
 
-            this.setState({ matches: matches });
-
-            const finishMatches = () => {
-                if (this.state.roundsFinished && this.state.groupsFinished) {
-                    callback(this.state.rounds, this.state.matches, this.state.groups);
-                } else {
-                    this.setState({ matchesFinished: true });
-                }
-            };
-
-            const getNodes = () => {
-                toornamentHelper.getBracketNodes(tournamentId, stageId, (results: any[]) => {
-                    results.forEach((result, index) => {
-                        let matchIndex = index;
-                        const matches = this.state.matches;
-                        let match = matches[matchIndex];
-
-                        if (match == null || match.id !== result.id) {
-                            matchIndex = matches.findIndex((m) => m.id === result.id);
-                            if (matchIndex < 0) {
-                                return;
-                            }
-                            match = matches[matchIndex];
-                        }
-
-                        match.opponents = result.opponents.map((opponent: any) => {
-                            return {
-                                number: opponent.number,
-                                sourceType: opponent.source_type,
-                                sourceNodeId: opponent.source_node_id,
-                            };
-                        });
-                        matches[matchIndex] = match;
-                        this.setState({ matches: matches, bracketNodeIndex: index + 1 });
-                    });
-                    finishMatches();
-                });
-            };
-
-            const callNext = () => {
-                if (this.state.matchIndex >= this.state.matches.length) {
-                    getNodes();
-                    return;
-                }
-
-                const matchId = this.state.matches[this.state.matchIndex].id;
-                const callback = (results: any[]) => {
-                    const matches = this.state.matches;
-                    matches[this.state.matchIndex].numberOfGames = results.length;
-                    this.setState({ matches: matches, matchIndex: this.state.matchIndex + 1 });
-                    callNext();
+            this.setState({ matches: matches }, () => {
+                const finishMatches = () => {
+                    if (this.state.roundsFinished && this.state.groupsFinished) {
+                        callback(this.state.rounds, this.state.matches, this.state.groups);
+                    } else {
+                        this.setState({ matchesFinished: true });
+                    }
                 };
-                toornamentHelper.getOrganizerMatchGames(tournamentId, matchId, callback);
-            };
 
-            callNext();
+                const getNodes = () => {
+                    toornamentHelper.getBracketNodes(tournamentId, stageId, (results: any[]) => {
+                        results.forEach((result, index) => {
+                            let matchIndex = index;
+                            const matches = this.state.matches;
+                            let match = matches[matchIndex];
+
+                            if (match == null || match.id !== result.id) {
+                                matchIndex = matches.findIndex((m) => m.id === result.id);
+                                if (matchIndex < 0) {
+                                    return;
+                                }
+                                match = matches[matchIndex];
+                            }
+
+                            match.opponents = result.opponents.map((opponent: any) => {
+                                return {
+                                    number: opponent.number,
+                                    sourceType: opponent.source_type,
+                                    sourceNodeId: opponent.source_node_id,
+                                };
+                            });
+                            matches[matchIndex] = match;
+                            this.setState({ matches: matches, bracketNodeIndex: index + 1 });
+                        });
+                        finishMatches();
+                    });
+                };
+
+                const callNext = () => {
+                    if (this.state.matchIndex >= this.state.matches.length) {
+                        getNodes();
+                        return;
+                    }
+
+                    const matchId = this.state.matches[this.state.matchIndex].id;
+                    const callback = (results: any[]) => {
+                        const matches = this.state.matches;
+                        matches[this.state.matchIndex].numberOfGames = results.length;
+                        this.setState({ matches: matches, matchIndex: this.state.matchIndex + 1 }, callNext);
+                    };
+                    toornamentHelper.getOrganizerMatchGames(tournamentId, matchId, callback);
+                };
+
+                callNext();
+            });
         });
     }
 
