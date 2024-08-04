@@ -32,6 +32,8 @@ const classes = {
     title: `${PREFIX}-title`,
 };
 
+const MAX_DAYS = 14
+
 const StyledGrid = styled(Grid)(({ theme }) => ({
     [`& .${classes.textField}`]: {
         marginTop: theme.spacing(1),
@@ -122,6 +124,12 @@ export default class ConfigurationStep extends React.Component<ConfigurationStep
         newCfg.schedulingMode = event.target.value;
         this.props.scheduleConfigChanged(newCfg);
     };
+    
+    handleChangeDays = (event: any) => {
+        const newCfg = this.props.config;
+        newCfg.days = event.target.value;
+        this.props.scheduleConfigChanged(newCfg);
+    };
 
     isValidMatchLength = (length: number): boolean => {
         return length > 0 && Number.isInteger(length);
@@ -166,6 +174,7 @@ export default class ConfigurationStep extends React.Component<ConfigurationStep
             SchedulingMode.Daily,
             SchedulingMode.Weekly,
             SchedulingMode.Monthly,
+            SchedulingMode.Days,
         ];
 
         const phases = this.props.config.phases.map((phase, index) => {
@@ -208,6 +217,26 @@ export default class ConfigurationStep extends React.Component<ConfigurationStep
                         })}
                     </Select>
                 </FormControl>
+                { this.props.config.schedulingMode === SchedulingMode.Days ? 
+                <FormControl className={classes.textField}>
+                    <InputLabel>Days between Matches</InputLabel>
+                    <Select
+                        value={this.props.config.days}
+                        onChange={this.handleChangeDays}
+                        inputProps={{
+                            name: 'days',
+                        }}
+                    >
+                        {Array.from(Array(MAX_DAYS)).map((_, index) => {
+                            return (
+                                <MenuItem value={index+1} key={`day-${index+1}-mi`}>
+                                    {index+1}
+                                </MenuItem>
+                            );
+                        })}
+                    </Select>
+                </FormControl>
+                : <div/>}
                 <Typography className={classes.title} variant='h6' component='div'>
                     Manage Phases
                 </Typography>

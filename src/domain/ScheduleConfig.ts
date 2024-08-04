@@ -8,6 +8,7 @@ export default interface ScheduleConfig {
     bracketType: BracketType;
     matchLengthSettings: MatchLengthSettings[];
     phases: SchedulePhase[];
+    days: number;
 }
 
 export enum SchedulingMode {
@@ -15,4 +16,5 @@ export enum SchedulingMode {
     Weekly = 'Weekly',
     Daily = 'Daily',
     Direct = 'Direct',
+    Days = 'Days',
 }

@@ -93,6 +93,7 @@ export default class ScheduleStepper extends React.Component<ScheduleStepperProp
                 ],
                 phases: [],
                 bracketType: BracketType.Bracket,
+                days: 2,
             },
             structure: new TournamentStructure([], [], [], BracketType.Bracket),
             fetching: false,

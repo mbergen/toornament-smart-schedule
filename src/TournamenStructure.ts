@@ -174,7 +174,7 @@ export default class TournamentStructure {
     }
 
     private scheduleRound(roundId: string, config: ScheduleConfig): Date {
-        const { matchLengthSettings, phases, schedulingMode } = config;
+        const { matchLengthSettings, phases, schedulingMode, days } = config;
         const roundIndex = this.rounds.findIndex((r) => r.id === roundId);
         if (roundIndex < 0) {
             throw new Error('Round must be in TournamentStructure.');
@@ -210,6 +210,9 @@ export default class TournamentStructure {
                         break;
                     case SchedulingMode.Monthly:
                         this.rounds[roundIndex].scheduledAt = prevStart.add(1, 'months').toDate();
+                        break;
+                    case SchedulingMode.Days:
+                        this.rounds[roundIndex].scheduledAt = prevStart.add(days, 'days').toDate();
                         break;
                     case SchedulingMode.Direct:
                     default:
